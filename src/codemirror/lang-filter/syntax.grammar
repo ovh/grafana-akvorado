@@ -1,0 +1,56 @@
+// SPDX-FileCopyrightText: 2022 Free Mobile
+// SPDX-License-Identifier: AGPL-3.0-only
+
+@top Filter {
+  expression
+}
+
+expression {
+ Not expression |
+ "(" expression ")" |
+ "(" expression ")" And expression |
+ "(" expression ")" Or expression |
+ comparisonExpression And expression |
+ comparisonExpression Or expression |
+ comparisonExpression
+}
+comparisonExpression {
+ Column Operator Value
+}
+
+Value {
+  String | Literal | ValueLParen ListOfValues ValueRParen
+}
+ListOfValues {
+  ListOfValues ValueComma (String | Literal) |
+  String | Literal
+}
+
+@skip { whitespace | LineComment | BlockComment }
+@tokens {
+  whitespace { std.whitespace+ }
+
+  LineComment { "--" ![\n]* }
+  BlockComment { "/*" blockCommentRest }
+  blockCommentRest { ![*] blockCommentRest | "*" blockCommentAfterStar }
+  blockCommentAfterStar { "/" | "*" blockCommentAfterStar | ![/*] blockCommentRest }
+
+  Column { std.asciiLetter (std.asciiLetter|std.digit)* }
+  Operator { $[a-zA-Z!=><]+ }
+
+  String {
+    '"' (![\\\n"] | "\\" _)* '"'? |
+    "'" (![\\\n'] | "\\" _)* "'"?
+  }
+  Literal { (std.digit | std.asciiLetter | $[.:/])+ }
+  ValueLParen { "(" }
+  ValueRParen { ")" }
+  ValueComma { "," }
+
+  Or { "or" | "OR" | "Or" | "oR" }
+  And { "and" | "AND" | "And" | "ANd" | "AnD" | "aND" | "aNd" | "anD" }
+  Not { "not" | "NOT" | "Not" | "NOt" | "NoT" | "nOT" | "nOt" | "noT" }
+
+  @precedence { Not, Column }
+  @precedence { Literal, BlockComment }
+}

@@ -1,0 +1,19 @@
+Licences:
+0BSD
+Apache-2.0
+MIT
+
+Packages:
+@codemirror/autocomplete@6.17.0; MIT
+@codemirror/state@6.4.1; MIT
+@emotion/css@11.10.6; MIT
+@grafana/data@10.3.3; Apache-2.0
+@grafana/runtime@10.3.3; Apache-2.0
+@grafana/schema@10.3.3; Apache-2.0
+@grafana/ui@10.3.3; Apache-2.0
+@lezer/generator@1.7.1; MIT
+@lezer/lr@1.4.2; MIT
+@uiw/react-codemirror@4.23.0; MIT
+react-dom@18.2.0; MIT
+react@18.2.0; MIT
+tslib@2.5.3; 0BSD

@@ -1,0 +1,99 @@
+{
+  "@codemirror/autocomplete@6.17.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/codemirror/autocomplete",
+    "publisher": "Marijn Haverbeke",
+    "email": "marijn@haverbeke.berlin",
+    "url": "http://marijnhaverbeke.nl",
+    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@codemirror/autocomplete",
+    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@codemirror/autocomplete/LICENSE"
+  },
+  "@codemirror/state@6.4.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/codemirror/state",
+    "publisher": "Marijn Haverbeke",
+    "email": "marijn@haverbeke.berlin",
+    "url": "http://marijnhaverbeke.nl",
+    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@codemirror/state",
+    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@codemirror/state/LICENSE"
+  },
+  "@emotion/css@11.10.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/emotion-js/emotion/tree/main/packages/css",
+    "publisher": "Kye Hohenberger",
+    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@emotion/css",
+    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@emotion/css/LICENSE"
+  },
+  "@grafana/data@10.3.3": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/grafana/grafana",
+    "publisher": "Grafana Labs",
+    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/data",
+    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/data/README.md"
+  },
+  "@grafana/runtime@10.3.3": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/grafana/grafana",
+    "publisher": "Grafana Labs",
+    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/runtime",
+    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/runtime/README.md"
+  },
+  "@grafana/schema@10.3.3": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/grafana/grafana",
+    "publisher": "Grafana Labs",
+    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/schema",
+    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/schema/README.md"
+  },
+  "@grafana/ui@10.3.3": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/grafana/grafana",
+    "publisher": "Grafana Labs",
+    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/ui",
+    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/ui/README.md"
+  },
+  "@lezer/generator@1.7.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lezer-parser/generator",
+    "publisher": "Marijn Haverbeke",
+    "email": "marijn@haverbeke.berlin",
+    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@lezer/generator",
+    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@lezer/generator/LICENSE"
+  },
+  "@lezer/lr@1.4.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lezer-parser/lr",
+    "publisher": "Marijn Haverbeke",
+    "email": "marijn@haverbeke.berlin",
+    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@lezer/lr",
+    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@lezer/lr/LICENSE"
+  },
+  "@uiw/react-codemirror@4.23.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/uiwjs/react-codemirror",
+    "publisher": "kenny wong",
+    "email": "wowohoo@qq.com",
+    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@uiw/react-codemirror",
+    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@uiw/react-codemirror/README.md"
+  },
+  "react-dom@18.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/facebook/react",
+    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/react-dom",
+    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/react-dom/LICENSE"
+  },
+  "react@18.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/facebook/react",
+    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/react",
+    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/react/LICENSE"
+  },
+  "tslib@2.5.3": {
+    "licenses": "0BSD",
+    "repository": "https://github.com/Microsoft/tslib",
+    "publisher": "Microsoft Corp.",
+    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/tslib",
+    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/tslib/LICENSE.txt"
+  }
+}
+

@@ -1,0 +1,25 @@
+services:
+  grafana:
+    user: root
+    container_name: 'ovhcloudnetworkobservability-akvorado-datasource'
+
+    platform: 'linux/amd64'
+    build:
+      context: ./.config
+      args:
+        grafana_image: ${GRAFANA_IMAGE:-grafana-enterprise}
+        grafana_version: ${GRAFANA_VERSION:-10.3.3}
+        development: ${DEVELOPMENT:-false}
+    ports:
+      - 10944:3000/tcp
+    volumes:
+      - ./dist:/var/lib/grafana/plugins/ovhcloudnetworkobservability-akvorado-datasource
+      - ./provisioning:/etc/grafana/provisioning
+      - .:/root/ovhcloudnetworkobservability-akvorado-datasource
+      - ./netsage-sankey-panel:/var/lib/grafana/plugins/netstage-sankey-panel
+    environment:
+      NODE_ENV: development
+      GF_LOG_FILTERS: plugin.ovhcloudnetworkobservability-akvorado-datasource:debug
+      GF_LOG_LEVEL: debug
+      GF_DATAPROXY_LOGGING: 1
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: ovhcloudnetworkobservability-akvorado-datasource
