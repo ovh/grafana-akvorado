@@ -23,7 +23,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "ovhcloudnetworkobservability",
+        "type": "ovhcloud",
         "uid": "c083d573-af82-4379-9ce1-6270054cacb7"
       },
       "fieldConfig": {
@@ -103,7 +103,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "ovhcloudnetworkobservability",
+            "type": "ovhcloud",
             "uid": "c083d573-af82-4379-9ce1-6270054cacb7"
           },
           "dimensions": [
@@ -121,7 +121,7 @@
     },
     {
       "datasource": {
-        "type": "ovhcloudnetworkobservability",
+        "type": "ovhcloud",
         "uid": "c083d573-af82-4379-9ce1-6270054cacb7"
       },
       "fieldConfig": {
@@ -166,7 +166,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "ovhcloudnetworkobservability",
+            "type": "ovhcloud",
             "uid": "c083d573-af82-4379-9ce1-6270054cacb7"
           },
           "dimensions": [

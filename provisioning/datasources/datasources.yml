@@ -2,7 +2,7 @@ apiVersion: 1
 
 datasources:
   - name: 'akvorado'
-    type: 'ovhcloudnetworkobservability-akvorado-datasource'
+    type: 'ovhcloud-akvorado-datasource'
     access: proxy
     isDefault: false
     orgId: 1
