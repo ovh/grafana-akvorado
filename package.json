@@ -1,6 +1,6 @@
 {
   "name": "akvorado",
-  "version": "1.0.32",
+  "version": "1.0.33",
   "description": "Akvorado netflow data source using akvorado api",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
