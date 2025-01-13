@@ -13,7 +13,7 @@
     "lint:fix": "npm run lint -- --fix",
     "e2e": "playwright test",
     "server": "docker compose up --build",
-    "sign": "npx --yes @grafana/sign-plugin@latest --rootUrls https://example.com/grafana",
+    "sign": "npx --yes @grafana/sign-plugin@latest",
     "prepare": "lezer-generator --typeScript src/codemirror/lang-filter/syntax.grammar -o src/codemirror/lang-filter/parser.ts"
   },
   "author": "Ovh",
