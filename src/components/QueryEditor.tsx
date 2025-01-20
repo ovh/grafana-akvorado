@@ -1,8 +1,8 @@
-import React, { ChangeEvent, useState, useEffect } from 'react';
+import React, { ChangeEvent, useState } from 'react';
 import { InlineField, Input, Stack, Select, AsyncMultiSelect, useTheme2, CollapsableSection } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, AppEvents } from '@grafana/data';
 import { DataSource, queryTypes, queryUnits } from '../datasource';
-import { Configuration, DEFAULT_LIMIT, MyDataSourceOptions, MyQuery } from '../types';
+import { Configuration, DEFAULT_LIMIT, DEFAULT_QUERY, MyDataSourceOptions, MyQuery } from '../types';
 
 import { getAppEvents } from '@grafana/runtime';
 import CodeMirror, { EditorView, placeholder } from '@uiw/react-codemirror';
@@ -22,7 +22,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
     dimensions?.map((v) => ({ label: v, value: v })) ?? [{ label: 'SrcAS', value: 'SrcAS' }]
   );
 
-  const [uiExpression, setUIExpression] = useState<string>();
+  const [uiExpression, setUIExpression] = useState<string>(expression || DEFAULT_QUERY.expression !!);
 
 
   const getFilterTheme = (isDark: boolean) => [
