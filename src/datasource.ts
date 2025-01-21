@@ -1,4 +1,4 @@
-import { FetchResponse, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { FetchResponse, getBackendSrv, getTemplateSrv, isFetchError } from '@grafana/runtime';
 import {
   CoreApp,
   DataQueryRequest,
@@ -46,7 +46,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         bidirectional: false,
         dimensions: target.dimensions,
         end: to,
-        filter: target.expression,
+        filter: getTemplateSrv().replace(target.expression, options.scopedVars),
         limit: target.limit,
         points: 200,
         'previous-period': false,
