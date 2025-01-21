@@ -156,6 +156,8 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
             width={10}
           />
         </InlineField>
+        </Stack>
+        <Stack>
         <InlineField label="Filters" tooltip="Filters for the query" grow={true} labelWidth={16}>
           <CodeMirror
             value={uiExpression}
