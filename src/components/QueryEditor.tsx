@@ -2,7 +2,7 @@ import React, { ChangeEvent, useState } from 'react';
 import { InlineField, Input, Stack, Select, AsyncMultiSelect, useTheme2, CollapsableSection } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, AppEvents } from '@grafana/data';
 import { DataSource, queryTypes, queryUnits } from '../datasource';
-import { Configuration, DEFAULT_LIMIT, MyDataSourceOptions, MyQuery } from '../types';
+import { Configuration, DEFAULT_LIMIT, DEFAULT_QUERY, MyDataSourceOptions, MyQuery } from '../types';
 
 import { getAppEvents } from '@grafana/runtime';
 import CodeMirror, { EditorView, placeholder } from '@uiw/react-codemirror';
@@ -17,12 +17,13 @@ const appEvents = getAppEvents();
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 export function QueryEditor({ query, onChange, datasource }: Props) {
-  const { limit, type, unit, dimensions } = query;
+  const { limit, type, unit, dimensions, expression } = query;
   const [uiDimensions, setUIDimensions] = useState<Array<SelectableValue<string>>>(
     dimensions?.map((v) => ({ label: v, value: v })) ?? [{ label: 'SrcAS', value: 'SrcAS' }]
   );
 
-  const [expression, setExpression] = useState<string>('InIfBoundary = external');
+  const [uiExpression, setUIExpression] = useState<string>(expression || DEFAULT_QUERY.expression !!);
+
 
   const getFilterTheme = (isDark: boolean) => [
     syntaxHighlighting(
@@ -59,10 +60,10 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
           .sort((a, b) => a.label.localeCompare(b.label)) ?? []
       );
     } catch (error) {
-        appEvents.publish({
-            type: AppEvents.alertError.name,
-            payload: ['Failed to fetch dimensions:'+error],
-        });
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: ['Failed to fetch dimensions:' + error],
+      });
       return [];
     }
   };
@@ -155,9 +156,11 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
             width={10}
           />
         </InlineField>
+        </Stack>
+        <Stack>
         <InlineField label="Filters" tooltip="Filters for the query" grow={true} labelWidth={16}>
           <CodeMirror
-            value={expression || ''}
+            value={uiExpression}
             theme={getTheme(theme.isDark)}
             extensions={[
               filterLanguage(),
@@ -170,7 +173,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
               EditorView.lineWrapping,
               EditorView.updateListener.of((viewUpdate) => {
                 if (viewUpdate.docChanged) {
-                  setExpression(viewUpdate.state.doc.toString());
+                  setUIExpression(viewUpdate.state.doc.toString());
                   onChange({ ...query, expression: viewUpdate.state.doc.toString() });
                 }
                 if (viewUpdate.focusChanged) {
@@ -194,9 +197,9 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
       </Stack>
       <Stack>
         <CollapsableSection label="Options" isOpen={false}>
-        <InlineField label="Legend" labelWidth={16} tooltip="Series name override or template. Ex {{hostname}} will be replaced with label values for hostname.">
-          <Select value={type} options={queryTypeOptions()} onChange={onTypeChange} width={20} />
-        </InlineField>
+          <InlineField label="Legend" labelWidth={16} tooltip="Series name override or template. Ex {{hostname}} will be replaced with label values for hostname.">
+            <Select value={type} options={queryTypeOptions()} onChange={onTypeChange} width={20} />
+          </InlineField>
         </CollapsableSection>
       </Stack>
     </Stack >
