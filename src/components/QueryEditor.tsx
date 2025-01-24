@@ -24,7 +24,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
   const [containsAddr, setContainsAddr] = useState(false);
 
   useEffect(() => {
-    const addrCheck = uiDimensions.some(dim => dim.value != undefined && dim.value.includes('Addr'));
+    const addrCheck = uiDimensions.some(dim => dim.value !== undefined && dim.value.includes('Addr'));
     setContainsAddr(addrCheck);
   }, [uiDimensions]);
 

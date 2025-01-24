@@ -35,7 +35,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   computeIntValue(value: string,options: DataQueryRequest<MyQuery>): number {
-   return ((Number.isInteger(value)) ? value : Number.parseInt(getTemplateSrv().replace(value, options.scopedVars))) as number;
+   return ((Number.isInteger(value)) ? value : Number.parseInt(getTemplateSrv().replace(value, options.scopedVars),10)) as number;
   }
 
   async query(options: DataQueryRequest<MyQuery>): Promise < DataQueryResponse > {
@@ -129,7 +129,7 @@ buildLabels(dimension: string[], r: string[]): Labels {
   });
 }
 
-  async post<T>(url: string, body ?: {}, params ?: string): Promise < FetchResponse < T >> {
+  async post<T>(url: string, body?: {}, params?: string): Promise < FetchResponse < T >> {
   const response = getBackendSrv().fetch<T>({
     url: `${this.baseUrl}${url}${params?.length ? `?${params}` : ''}`,
     data: body,
@@ -138,7 +138,7 @@ buildLabels(dimension: string[], r: string[]): Labels {
   return lastValueFrom(response);
 }
 
-  async request<T>(url: string, params ?: string) {
+  async request<T>(url: string, params?: string) {
   const response = getBackendSrv().fetch<T>({
     url: `${this.baseUrl}/${url}${params?.length ? `?${params}` : ''}`,
   });
