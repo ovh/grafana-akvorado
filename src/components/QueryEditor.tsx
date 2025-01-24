@@ -225,7 +225,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
             <Input
               id="uiTruncatedV4"
               type="number"
-              value={truncatev4 || DEFAULT_QUERY.truncatev4!!}
+              value={truncatev4 || '32' }
               onChange={onTruncatedV4Change}
               min={0}
               max={32}
@@ -235,7 +235,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
             <Input
               id="uiTruncatedV6"
               type="number"
-              value={truncatev6 || DEFAULT_QUERY.truncatev6!!}
+              value={truncatev6 || '128' }
               onChange={onTruncatedV6Change}
               min={0}
               max={128}
