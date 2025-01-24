@@ -115,18 +115,18 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
   };
 
   const onLimitChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...query, limit: parseInt(event.target.value, 10) });
+    onChange({ ...query, limit: event.target.value });
   };
 
   // Handler for uiTruncatedV4 input change
   const onTruncatedV4Change = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...query, truncatev4: parseInt(event.target.value, 10) });
+    onChange({ ...query, truncatev4: event.target.value });
   }
 
 
   // Handler for uiTruncatedV6 input change
   const onTruncatedV6Change = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...query, truncatev6: parseInt(event.target.value, 10) });
+    onChange({ ...query, truncatev6: event.target.value });
   };
 
   const queryTypeOptions = () =>
@@ -170,20 +170,6 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
             value={limit || DEFAULT_LIMIT}
             onChange={onLimitChange}
             placeholder="Enter limit"
-            onKeyDown={(event) => {
-              const key = event.key;
-              if (
-                !(
-                  /[0-9]/.test(key) ||
-                  key === 'Backspace' ||
-                  key === 'Delete' ||
-                  key === 'ArrowLeft' ||
-                  key === 'ArrowRight'
-                )
-              ) {
-                event.preventDefault();
-              }
-            }}
             width={10}
           />
         </InlineField>
@@ -243,20 +229,6 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
               onChange={onTruncatedV4Change}
               min={0}
               max={32}
-              onKeyDown={(event) => {
-                const key = event.key;
-                if (
-                  !(
-                    /[0-9]/.test(key) ||
-                    key === 'Backspace' ||
-                    key === 'Delete' ||
-                    key === 'ArrowLeft' ||
-                    key === 'ArrowRight'
-                  )
-                ) {
-                  event.preventDefault();
-                }
-              }}
             />
           </InlineField>
           <InlineField label="IPv6 /x" labelWidth={16} tooltip="IPv6 /x">
@@ -267,20 +239,6 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
               onChange={onTruncatedV6Change}
               min={0}
               max={128}
-              onKeyDown={(event) => {
-                const key = event.key;
-                if (
-                  !(
-                    /[0-9]/.test(key) ||
-                    key === 'Backspace' ||
-                    key === 'Delete' ||
-                    key === 'ArrowLeft' ||
-                    key === 'ArrowRight'
-                  )
-                ) {
-                  event.preventDefault();
-                }
-              }}
             />
           </InlineField>
           <InlineField label="Top by" labelWidth={16} tooltip="Way to fetch the limit">
