@@ -1,5 +1,5 @@
-import React, { ChangeEvent, useState } from 'react';
-import { InlineField, Input, Stack, Select, AsyncMultiSelect, useTheme2, CollapsableSection } from '@grafana/ui';
+import React, { ChangeEvent, useEffect, useState } from 'react';
+import { InlineField, Input, Stack, Select, AsyncMultiSelect, useTheme2, CollapsableSection, Label } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, AppEvents } from '@grafana/data';
 import { DataSource, queryTypes, queryUnits } from '../datasource';
 import { Configuration, DEFAULT_LIMIT, DEFAULT_QUERY, MyDataSourceOptions, MyQuery } from '../types';
@@ -21,6 +21,12 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
   const [uiDimensions, setUIDimensions] = useState<Array<SelectableValue<string>>>(
     dimensions?.map((v) => ({ label: v, value: v })) ?? [{ label: 'SrcAS', value: 'SrcAS' }]
   );
+  const [containsAddr, setContainsAddr] = useState(false);
+
+  useEffect(() => {
+    const addrCheck = uiDimensions.some(dim => dim.value != undefined && dim.value.includes('Addr'));
+    setContainsAddr(addrCheck);
+  }, [uiDimensions]);
 
   const [uiExpression, setUIExpression] = useState<string>(expression || DEFAULT_QUERY.expression !!);
 
@@ -202,6 +208,18 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
           </InlineField>
         </CollapsableSection>
       </Stack>
+      {containsAddr && (
+        <Stack>
+          <InlineField label="New Field" labelWidth={16} tooltip="Description of the new field">
+            <Input
+              id="new-field"
+              type="text"
+              placeholder="Enter new field value"
+              width={20}
+            />
+          </InlineField>
+        </Stack>
+      )}
     </Stack >
 
 
