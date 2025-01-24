@@ -17,7 +17,7 @@ const appEvents = getAppEvents();
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 export function QueryEditor({ query, onChange, datasource }: Props) {
-  const { limit, type, unit, dimensions, expression,truncatev4,truncatev6,limitType } = query;
+  const { limit, type, unit, dimensions, expression, truncatev4, truncatev6, topType } = query;
   const [uiDimensions, setUIDimensions] = useState<Array<SelectableValue<string>>>(
     dimensions?.map((v) => ({ label: v, value: v })) ?? [{ label: 'SrcAS', value: 'SrcAS' }]
   );
@@ -28,36 +28,16 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
     setContainsAddr(addrCheck);
   }, [uiDimensions]);
 
-  const [uiExpression, setUIExpression] = useState<string>(expression || DEFAULT_QUERY.expression !!);
-  const [uiLimitType, setUILimitType] = useState<string>(limitType || DEFAULT_QUERY.limitType !!);
+  const [uiExpression, setUIExpression] = useState<string>(expression || DEFAULT_QUERY.expression!!);
+  const [uiTopType, setUITopType] = useState<string>(topType || DEFAULT_QUERY.topType!!);
   // Handler for the dropdown change event
-  const handleLimitTypeChange =  (item: SelectableValue<string>) => {
+  const handleLimitTypeChange = (item: SelectableValue<string>) => {
     const value = item.value!!;
-    setUILimitType(value);
-    onChange({ ...query, limitType: value });
+    setUITopType(value);
+    onChange({ ...query, topType: value });
   };
-  const [uiTruncatedV4, setTruncatedV4] = useState<number>(truncatev4 || DEFAULT_QUERY.truncatev4 !!)
-  const [uiTruncatedV6, setTruncatedV6] = useState<number>(truncatev6 || DEFAULT_QUERY.truncatev6 !!)
 
-    // Handler for uiTruncatedV4 input change
-    const handleV4Change = (event: React.ChangeEvent<HTMLInputElement>) => {
-      const value = parseInt(event.target.value, 10);
-      if (!isNaN(value) && value >= 0 && value <= 32) {
-        setTruncatedV4(value);
-        onChange({ ...query, truncatev4: value });
 
-      }
-    };
-  
-    // Handler for uiTruncatedV6 input change
-    const handleV6Change = (event: React.ChangeEvent<HTMLInputElement>) => {
-      const value = parseInt(event.target.value, 10);
-      if (!isNaN(value) && value >= 0 && value <= 128) {
-        setTruncatedV6(value);
-        onChange({ ...query, truncatev6: value });
-
-      }
-    };
 
 
   const getFilterTheme = (isDark: boolean) => [
@@ -138,6 +118,17 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
     onChange({ ...query, limit: parseInt(event.target.value, 10) });
   };
 
+  // Handler for uiTruncatedV4 input change
+  const onTruncatedV4Change = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, truncatev4: parseInt(event.target.value, 10) });
+  }
+
+
+  // Handler for uiTruncatedV6 input change
+  const onTruncatedV6Change = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, truncatev6: parseInt(event.target.value, 10) });
+  };
+
   const queryTypeOptions = () =>
     Object.keys(queryTypes).map((v) => {
       return { label: v, value: v };
@@ -149,7 +140,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
     });
 
   const queryTopOptions = () => {
-    return [{label: "Avg",value: "avg"},{label: "Max",value: "max"}]
+    return [{ label: "Avg", value: "avg" }, { label: "Max", value: "max" }]
   }
 
   return (
@@ -196,8 +187,8 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
             width={10}
           />
         </InlineField>
-        </Stack>
-        <Stack>
+      </Stack>
+      <Stack>
         <InlineField label="Filters" tooltip="Filters for the query" grow={true} labelWidth={16}>
           <CodeMirror
             value={uiExpression}
@@ -245,34 +236,62 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
       {containsAddr && (
         <Stack>
           <InlineField label="IPv4 /x" labelWidth={16} tooltip="IPv4 /x">
-          <Input
-          id="uiTruncatedV4"
-          type="number"
-          value={uiTruncatedV4}
-          onChange={handleV4Change}
-          min={0}
-          max={32}
-        />
+            <Input
+              id="uiTruncatedV4"
+              type="number"
+              value={truncatev4 || DEFAULT_QUERY.truncatev4!!}
+              onChange={onTruncatedV4Change}
+              min={0}
+              max={32}
+              onKeyDown={(event) => {
+                const key = event.key;
+                if (
+                  !(
+                    /[0-9]/.test(key) ||
+                    key === 'Backspace' ||
+                    key === 'Delete' ||
+                    key === 'ArrowLeft' ||
+                    key === 'ArrowRight'
+                  )
+                ) {
+                  event.preventDefault();
+                }
+              }}
+            />
           </InlineField>
           <InlineField label="IPv6 /x" labelWidth={16} tooltip="IPv6 /x">
-          <Input
-          id="uiTruncatedV6"
-          type="number"
-          value={uiTruncatedV6}
-          onChange={handleV6Change}
-          min={0}
-          max={128}
-        />
+            <Input
+              id="uiTruncatedV6"
+              type="number"
+              value={truncatev6 || DEFAULT_QUERY.truncatev6!!}
+              onChange={onTruncatedV6Change}
+              min={0}
+              max={128}
+              onKeyDown={(event) => {
+                const key = event.key;
+                if (
+                  !(
+                    /[0-9]/.test(key) ||
+                    key === 'Backspace' ||
+                    key === 'Delete' ||
+                    key === 'ArrowLeft' ||
+                    key === 'ArrowRight'
+                  )
+                ) {
+                  event.preventDefault();
+                }
+              }}
+            />
           </InlineField>
           <InlineField label="Top by" labelWidth={16} tooltip="Way to fetch the limit">
-          <Select
-          id="uiLimitType"
-          value={uiLimitType}
-          onChange={handleLimitTypeChange}
-          options={queryTopOptions()}
-          width={20}
-        >
-        </Select>
+            <Select
+              id="uiLimitType"
+              value={uiTopType}
+              onChange={handleLimitTypeChange}
+              options={queryTopOptions()}
+              width={20}
+            >
+            </Select>
           </InlineField>
         </Stack>
       )}

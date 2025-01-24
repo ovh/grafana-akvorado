@@ -53,7 +53,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         start: from,
         'truncate-v4': target.truncatev4,
         'truncate-v6': target.truncatev6,
-        limitType: target.limitType,
+        limitType: target.topType,
         units: target.unit,
       };
       const endpoint: string = queryTypes[target.type];

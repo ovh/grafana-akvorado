@@ -9,7 +9,7 @@ export interface MyQuery extends DataQuery {
   limit: number;
   truncatev4: number;
   truncatev6: number;
-  limitType: string;
+  topType: string;
   unit: string;
   error: string | undefined;
 }
@@ -29,7 +29,7 @@ export const DEFAULT_QUERY: Partial<MyQuery> = {
   unit: 'l3bps',
   truncatev4: 32,
   truncatev6: 128,
-  limitType: "avg" //avg or max
+  topType: "avg" //avg or max
 };
 export type ApiCompleteResult = {
   completions: Array<{ label: string; detail?: string; quoted: boolean }>;
