@@ -1,5 +1,5 @@
 import React, { ChangeEvent, useEffect, useState } from 'react';
-import { InlineField, Input, Stack, Select, AsyncMultiSelect, useTheme2, CollapsableSection, Label } from '@grafana/ui';
+import { InlineField, Input, Stack, Select, AsyncMultiSelect, useTheme2, CollapsableSection } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, AppEvents } from '@grafana/data';
 import { DataSource, queryTypes, queryUnits } from '../datasource';
 import { Configuration, DEFAULT_LIMIT, DEFAULT_QUERY, MyDataSourceOptions, MyQuery } from '../types';
@@ -17,7 +17,7 @@ const appEvents = getAppEvents();
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 export function QueryEditor({ query, onChange, datasource }: Props) {
-  const { limit, type, unit, dimensions, expression } = query;
+  const { limit, type, unit, dimensions, expression,truncatev4,truncatev6 } = query;
   const [uiDimensions, setUIDimensions] = useState<Array<SelectableValue<string>>>(
     dimensions?.map((v) => ({ label: v, value: v })) ?? [{ label: 'SrcAS', value: 'SrcAS' }]
   );
@@ -29,6 +29,29 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
   }, [uiDimensions]);
 
   const [uiExpression, setUIExpression] = useState<string>(expression || DEFAULT_QUERY.expression !!);
+
+  const [uiTruncatedV4, setTruncatedV4] = useState<number>(truncatev4 || DEFAULT_QUERY.truncatev4 !!)
+  const [uiTruncatedV6, setTruncatedV6] = useState<number>(truncatev6 || DEFAULT_QUERY.truncatev6 !!)
+
+    // Handler for uiTruncatedV4 input change
+    const handleV4Change = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = parseInt(event.target.value, 10);
+      if (!isNaN(value) && value >= 0 && value <= 32) {
+        setTruncatedV4(value);
+        onChange({ ...query, truncatev4: value });
+
+      }
+    };
+  
+    // Handler for uiTruncatedV6 input change
+    const handleV6Change = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = parseInt(event.target.value, 10);
+      if (!isNaN(value) && value >= 0 && value <= 128) {
+        setTruncatedV6(value);
+        onChange({ ...query, truncatev6: value });
+
+      }
+    };
 
 
   const getFilterTheme = (isDark: boolean) => [
@@ -210,13 +233,25 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
       </Stack>
       {containsAddr && (
         <Stack>
-          <InlineField label="New Field" labelWidth={16} tooltip="Description of the new field">
-            <Input
-              id="new-field"
-              type="text"
-              placeholder="Enter new field value"
-              width={20}
-            />
+          <InlineField label="IPv4 /x" labelWidth={16} tooltip="IPv4 /x">
+          <Input
+          id="uiTruncatedV4"
+          type="number"
+          value={uiTruncatedV4}
+          onChange={handleV4Change}
+          min={0}
+          max={32}
+        />
+          </InlineField>
+          <InlineField label="IPv6 /x" labelWidth={16} tooltip="IPv6 /x">
+          <Input
+          id="uiTruncatedV6"
+          type="number"
+          value={uiTruncatedV6}
+          onChange={handleV6Change}
+          min={0}
+          max={128}
+        />
           </InlineField>
         </Stack>
       )}
