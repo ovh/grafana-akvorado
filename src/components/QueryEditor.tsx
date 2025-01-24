@@ -17,7 +17,7 @@ const appEvents = getAppEvents();
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 export function QueryEditor({ query, onChange, datasource }: Props) {
-  const { limit, type, unit, dimensions, expression,truncatev4,truncatev6 } = query;
+  const { limit, type, unit, dimensions, expression,truncatev4,truncatev6,limitType } = query;
   const [uiDimensions, setUIDimensions] = useState<Array<SelectableValue<string>>>(
     dimensions?.map((v) => ({ label: v, value: v })) ?? [{ label: 'SrcAS', value: 'SrcAS' }]
   );
@@ -29,7 +29,13 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
   }, [uiDimensions]);
 
   const [uiExpression, setUIExpression] = useState<string>(expression || DEFAULT_QUERY.expression !!);
-
+  const [uiLimitType, setUILimitType] = useState<string>(limitType || DEFAULT_QUERY.limitType !!);
+  // Handler for the dropdown change event
+  const handleLimitTypeChange =  (item: SelectableValue<string>) => {
+    const value = item.value!!;
+    setUILimitType(value);
+    onChange({ ...query, limitType: value });
+  };
   const [uiTruncatedV4, setTruncatedV4] = useState<number>(truncatev4 || DEFAULT_QUERY.truncatev4 !!)
   const [uiTruncatedV6, setTruncatedV6] = useState<number>(truncatev6 || DEFAULT_QUERY.truncatev6 !!)
 
@@ -111,6 +117,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
     }
     onChange({ ...query, dimensions: newdimensions, error: myerror });
   };
+
   const onTypeChange = (item: SelectableValue<string>) => {
     let myerror: string | undefined;
     if (item.value === 'sankey' && dimensions && dimensions.length < 2) {
@@ -140,6 +147,10 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
     queryUnits.map((v) => {
       return { label: v, value: v };
     });
+
+  const queryTopOptions = () => {
+    return [{label: "Avg",value: "avg"},{label: "Max",value: "max"}]
+  }
 
   return (
 
@@ -252,6 +263,16 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
           min={0}
           max={128}
         />
+          </InlineField>
+          <InlineField label="Top by" labelWidth={16} tooltip="Way to fetch the limit">
+          <Select
+          id="uiLimitType"
+          value={uiLimitType}
+          onChange={handleLimitTypeChange}
+          options={queryTopOptions()}
+          width={20}
+        >
+        </Select>
           </InlineField>
         </Stack>
       )}
