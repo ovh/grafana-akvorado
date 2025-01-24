@@ -51,8 +51,9 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         points: 200,
         'previous-period': false,
         start: from,
-        'truncate-v4': 32,
-        'truncate-v6': 128,
+        'truncate-v4': target.truncatev4 ?? '32',
+        'truncate-v6': target.truncatev6 ?? '128',
+        limitType: target.topType,
         units: target.unit,
       };
       const endpoint: string = queryTypes[target.type];
@@ -63,7 +64,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
         const response = await this.post<TimeseriesResponse>(endpoint, body, '');
         fields.push({ name: 'Time', type: FieldType.time, values: response.data.t });
         response.data.rows.forEach((r, i) => {
-          fields.push({ type: FieldType.number, values: response.data.points[i], labels: this.buildLabels(target.dimensions!!, r) });
+          fields.push({ type: FieldType.number, values: response.data.points[i], labels: this.buildLabels(target.dimensions!!, r), name: undefined });
         });
       } else if (target.type === 'sankey') {
         const response = await this.post<SandkeyResponse>(endpoint, body, '');

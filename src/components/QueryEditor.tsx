@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useState } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import { InlineField, Input, Stack, Select, AsyncMultiSelect, useTheme2, CollapsableSection } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, AppEvents } from '@grafana/data';
 import { DataSource, queryTypes, queryUnits } from '../datasource';
@@ -17,12 +17,27 @@ const appEvents = getAppEvents();
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 export function QueryEditor({ query, onChange, datasource }: Props) {
-  const { limit, type, unit, dimensions, expression } = query;
+  const { limit, type, unit, dimensions, expression, truncatev4, truncatev6, topType } = query;
   const [uiDimensions, setUIDimensions] = useState<Array<SelectableValue<string>>>(
     dimensions?.map((v) => ({ label: v, value: v })) ?? [{ label: 'SrcAS', value: 'SrcAS' }]
   );
+  const [containsAddr, setContainsAddr] = useState(false);
 
-  const [uiExpression, setUIExpression] = useState<string>(expression || DEFAULT_QUERY.expression !!);
+  useEffect(() => {
+    const addrCheck = uiDimensions.some(dim => dim.value != undefined && dim.value.includes('Addr'));
+    setContainsAddr(addrCheck);
+  }, [uiDimensions]);
+
+  const [uiExpression, setUIExpression] = useState<string>(expression || DEFAULT_QUERY.expression!!);
+  const [uiTopType, setUITopType] = useState<string>(topType || DEFAULT_QUERY.topType!!);
+  // Handler for the dropdown change event
+  const handleLimitTypeChange = (item: SelectableValue<string>) => {
+    const value = item.value!!;
+    setUITopType(value);
+    onChange({ ...query, topType: value });
+  };
+
+
 
 
   const getFilterTheme = (isDark: boolean) => [
@@ -82,6 +97,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
     }
     onChange({ ...query, dimensions: newdimensions, error: myerror });
   };
+
   const onTypeChange = (item: SelectableValue<string>) => {
     let myerror: string | undefined;
     if (item.value === 'sankey' && dimensions && dimensions.length < 2) {
@@ -102,6 +118,17 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
     onChange({ ...query, limit: parseInt(event.target.value, 10) });
   };
 
+  // Handler for uiTruncatedV4 input change
+  const onTruncatedV4Change = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, truncatev4: parseInt(event.target.value, 10) });
+  }
+
+
+  // Handler for uiTruncatedV6 input change
+  const onTruncatedV6Change = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, truncatev6: parseInt(event.target.value, 10) });
+  };
+
   const queryTypeOptions = () =>
     Object.keys(queryTypes).map((v) => {
       return { label: v, value: v };
@@ -111,6 +138,10 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
     queryUnits.map((v) => {
       return { label: v, value: v };
     });
+
+  const queryTopOptions = () => {
+    return [{ label: "Avg", value: "avg" }, { label: "Max", value: "max" }]
+  }
 
   return (
 
@@ -156,8 +187,8 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
             width={10}
           />
         </InlineField>
-        </Stack>
-        <Stack>
+      </Stack>
+      <Stack>
         <InlineField label="Filters" tooltip="Filters for the query" grow={true} labelWidth={16}>
           <CodeMirror
             value={uiExpression}
@@ -202,6 +233,68 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
           </InlineField>
         </CollapsableSection>
       </Stack>
+      {containsAddr && (
+        <Stack>
+          <InlineField label="IPv4 /x" labelWidth={16} tooltip="IPv4 /x">
+            <Input
+              id="uiTruncatedV4"
+              type="number"
+              value={truncatev4 || '32' }
+              onChange={onTruncatedV4Change}
+              min={0}
+              max={32}
+              onKeyDown={(event) => {
+                const key = event.key;
+                if (
+                  !(
+                    /[0-9]/.test(key) ||
+                    key === 'Backspace' ||
+                    key === 'Delete' ||
+                    key === 'ArrowLeft' ||
+                    key === 'ArrowRight'
+                  )
+                ) {
+                  event.preventDefault();
+                }
+              }}
+            />
+          </InlineField>
+          <InlineField label="IPv6 /x" labelWidth={16} tooltip="IPv6 /x">
+            <Input
+              id="uiTruncatedV6"
+              type="number"
+              value={truncatev6 || '128' }
+              onChange={onTruncatedV6Change}
+              min={0}
+              max={128}
+              onKeyDown={(event) => {
+                const key = event.key;
+                if (
+                  !(
+                    /[0-9]/.test(key) ||
+                    key === 'Backspace' ||
+                    key === 'Delete' ||
+                    key === 'ArrowLeft' ||
+                    key === 'ArrowRight'
+                  )
+                ) {
+                  event.preventDefault();
+                }
+              }}
+            />
+          </InlineField>
+          <InlineField label="Top by" labelWidth={16} tooltip="Way to fetch the limit">
+            <Select
+              id="uiLimitType"
+              value={uiTopType}
+              onChange={handleLimitTypeChange}
+              options={queryTopOptions()}
+              width={20}
+            >
+            </Select>
+          </InlineField>
+        </Stack>
+      )}
     </Stack >
 
 
