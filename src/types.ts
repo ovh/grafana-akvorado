@@ -1,12 +1,15 @@
 import {DataSourceJsonData, FieldType, Labels} from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
-export const DEFAULT_LIMIT = 10;
+export const DEFAULT_LIMIT = '10';
 
 export interface MyQuery extends DataQuery {
   expression?: string;
   dimensions?: string[];
   type: string;
-  limit: number;
+  limit: string;
+  truncatev4: string;
+  truncatev6: string;
+  topType: string;
   unit: string;
   error: string | undefined;
 }
@@ -24,6 +27,9 @@ export const DEFAULT_QUERY: Partial<MyQuery> = {
   dimensions: ['SrcAS'],
   limit: DEFAULT_LIMIT,
   unit: 'l3bps',
+  truncatev4: '32',
+  truncatev6: '128',
+  topType: "avg" //avg or max
 };
 export type ApiCompleteResult = {
   completions: Array<{ label: string; detail?: string; quoted: boolean }>;
