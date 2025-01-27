@@ -5,8 +5,8 @@ Akvorado netflow data source using akvorado api
 
 ## Introduction
 This plugin aim to allow user to display [akvorado](https://github.com/akvorado/akvorado) data directly in Grafana.
-![example1](https://github.com/moutyque/grafana-akvorado/blob/main/src/img/example1.png?raw=true)
-![example2](https://github.com/moutyque/grafana-akvorado/blob/main/src/img/example2.png?raw=true)
+![example1](https://github.com/ovh/grafana-akvorado/blob/main/src/img/example1.png?raw=true)
+![example2](https://github.com/ovh/grafana-akvorado/blob/main/src/img/example2.png?raw=true)
 
 ## Requirements
 List any requirements or dependencies they may need to run the plugin.
@@ -19,10 +19,10 @@ In Grafana:
 - Akvorado
 - Add new `Akvorado` data source
 
-![datasource.png](https://github.com/moutyque/grafana-akvorado/blob/main/src/img/datasource.png?raw=true)
+![datasource.png](https://github.com/ovh/grafana-akvorado/blob/main/src/img/datasource.png?raw=true)
 - Enter the base url; eg: https://demo.akvorado.net/
 
-![connection.png](https://github.com/moutyque/grafana-akvorado/blob/main/src/img/connection.png?raw=true)
+![connection.png](https://github.com/ovh/grafana-akvorado/blob/main/src/img/connection.png?raw=true)
 
 ## Building queries
 
@@ -47,10 +47,10 @@ Queries can be built using pre-configured parameters.
 ### Query examples
 
 Visualize the top 10 traffic per Source BGP AS for Ingress traffic, in bytes per second (pps)
-![example1.png](https://github.com/moutyque/grafana-akvorado/blob/main/src/img/example1.png?raw=true)
+![example1.png](https://github.com/ovh/grafana-akvorado/blob/main/src/img/example1.png?raw=true)
 
 Visualize the Top 10 Source BGP AS and Exporter Site for Ingress traffic, in packets per second (pps)
-![example2.png](https://github.com/moutyque/grafana-akvorado/blob/main/src/img/example2.png?raw=true)
+![example2.png](https://github.com/ovh/grafana-akvorado/blob/main/src/img/example2.png?raw=true)
 ## Contributing
 
-If you want to contribute feel free to open a PR in this [repo](https://github.com/moutyque/grafana-akvorado)
+If you want to contribute feel free to open a PR in this [repo](https://github.com/ovh/grafana-akvorado)
