@@ -1,4 +1,4 @@
-module github.com/ov-hcloud/akvorado
+module github.com/ovh-cloud/akvorado
 
 go 1.22
 
