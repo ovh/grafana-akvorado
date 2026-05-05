@@ -68,7 +68,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       const response = await this.post<TimeseriesResponse>(endpoint, body, '');
       fields.push({ name: 'Time', type: FieldType.time, values: response.data.t });
       response.data.rows.forEach((r, i) => {
-          fields.push({ type: FieldType.number, values: response.data.points[i], labels: this.buildLabels(target.dimensions!!, r), name: undefined });
+          fields.push({ type: FieldType.number, values: response.data.points[i], labels: this.buildLabels(target.dimensions!!, r), name: r.length ? r.join(' - ') : target.unit });
       });
     } else if (target.type === 'sankey') {
       const response = await this.post<SandkeyResponse>(endpoint, body, '');
