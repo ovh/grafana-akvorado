@@ -5,7 +5,6 @@ import { syntaxTree } from '@codemirror/language';
 
 import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import type { SyntaxNode } from '@lezer/common';
-import { ApiCompleteResult } from '../../types';
 import { DataSource } from 'datasource';
 
 // Some helpers to match nodes.
@@ -61,11 +60,12 @@ export const createComplete =
       payload: { what: string; column?: string; prefix?: string },
       transform = (x: { label: string; detail?: string }) => x
     ) => {
-      const response = await datasource.post<ApiCompleteResult>('/api/v0/console/filter/complete', JSON.stringify(payload));
-      if (!response.ok) {
+      let data;
+      try {
+        data = await datasource.completeFilter(payload);
+      } catch (err) {
         return;
       }
-      const data: ApiCompleteResult = response.data;
       completion.options = [
         ...completion.options,
         ...(data.completions ?? []).map(({ label, detail, quoted }) =>

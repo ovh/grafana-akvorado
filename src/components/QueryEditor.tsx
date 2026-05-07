@@ -2,7 +2,7 @@ import React, { ChangeEvent, useEffect, useState } from 'react';
 import { InlineField, Input, Stack, Select, AsyncMultiSelect, useTheme2, CollapsableSection } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, AppEvents } from '@grafana/data';
 import { DataSource, queryTypes, queryUnits } from '../datasource';
-import { Configuration, DEFAULT_LIMIT, DEFAULT_QUERY, MyDataSourceOptions, MyQuery } from '../types';
+import { DEFAULT_LIMIT, DEFAULT_QUERY, MyDataSourceOptions, MyQuery } from '../types';
 
 import { getAppEvents } from '@grafana/runtime';
 import CodeMirror, { EditorView, placeholder } from '@uiw/react-codemirror';
@@ -64,9 +64,9 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
 
   const loadAsyncDimensions = async (query: string): Promise<Array<SelectableValue<string>>> => {
     try {
-      const response = await datasource.request<Configuration>('/api/v0/console/configuration');
+      const config = await datasource.getConfiguration();
       return (
-        response?.data.dimensions
+        config?.dimensions
           ?.filter((s) => s.toLowerCase().startsWith(query.toLocaleLowerCase()))
           .map((v) => ({
             label: v,

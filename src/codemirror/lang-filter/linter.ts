@@ -6,13 +6,6 @@ import type { EditorView } from '@codemirror/view';
 import { DataSource } from 'datasource';
 import { linter } from '@codemirror/lint';
 
-type ApiValidationResponse = {
-  errors?: Array<{
-    offset: number;
-    message: string;
-  }>;
-};
-
 enum Severity {
   Error = 'error',
   Warning = 'warning',
@@ -23,16 +16,13 @@ enum Severity {
 export const createLinter = (datasource: DataSource) => {
   return linter(async (view: EditorView) => {
     const code = view.state.doc.toString();
-    const response = await datasource.post<ApiValidationResponse>(
-      '/api/v0/console/filter/validate',
-      JSON.stringify({ filter: code })
-    );
-
-    if (!response.ok) {
+    let data;
+    try {
+      data = await datasource.validateFilter(code);
+    } catch (err) {
       return [];
     }
 
-    const data: ApiValidationResponse = response.data;
     return (
       data.errors?.map(({ offset, message }) => {
         const syntaxNode = syntaxTree(view.state).resolve(offset, 1);

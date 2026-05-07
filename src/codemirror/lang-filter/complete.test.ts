@@ -1,7 +1,6 @@
 import {EditorState} from '@codemirror/state';
 import {CompletionContext, autocompletion, type CompletionResult} from '@codemirror/autocomplete';
 import {filterLanguage, filterCompletion} from '.';
-import {FetchResponse} from '@grafana/runtime';
 import {ApiCompleteResult} from '../../types';
 
 
@@ -13,7 +12,7 @@ export interface Body {
 
 describe('filter completion', () => {
     let requestBody: Body | undefined = undefined;
-    let mockPost: (url: string, body?: {}, params?: string) => Promise<FetchResponse<ApiCompleteResult>>;
+    let mockCompleteFilter: (payload: Body) => Promise<ApiCompleteResult>;
 
     // Use the mocked DataSource class directly
     const DataSource = require('../../datasource').DataSource;
@@ -113,21 +112,15 @@ describe('filter completion', () => {
 
     jest.mock('../../datasource', () => {
 
-        mockPost = jest.fn().mockImplementation((url: string, b: string) => {
-            const body: Body = JSON.parse(b);
-            requestBody = body;
-            const data = mockedResults(body);
-            const mockResponse = {
-                ok: true,
-                data: data,
-            };
-            return Promise.resolve(mockResponse as unknown as Response);
+        mockCompleteFilter = jest.fn().mockImplementation((payload: Body) => {
+            requestBody = payload;
+            return Promise.resolve(mockedResults(payload));
         });
 
         return {
             DataSource: jest.fn().mockImplementation(() => {
                 return {
-                    post: mockPost,
+                    completeFilter: mockCompleteFilter,
                 };
             }),
         };
