@@ -11,7 +11,7 @@ services:
         grafana_version: ${GRAFANA_VERSION:-13.0.1}
         development: ${DEVELOPMENT:-false}
     ports:
-      - 10944:3000/tcp
+      - 3000:3000/tcp
     volumes:
       - ./dist:/var/lib/grafana/plugins/ovhcloud-akvorado-datasource
       - ./provisioning:/etc/grafana/provisioning
