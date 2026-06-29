@@ -8,10 +8,10 @@ services:
       context: ./.config
       args:
         grafana_image: ${GRAFANA_IMAGE:-grafana-enterprise}
-        grafana_version: ${GRAFANA_VERSION:-10.3.3}
+        grafana_version: ${GRAFANA_VERSION:-13.0.1}
         development: ${DEVELOPMENT:-false}
     ports:
-      - 10944:3000/tcp
+      - 3000:3000/tcp
     volumes:
       - ./dist:/var/lib/grafana/plugins/ovhcloud-akvorado-datasource
       - ./provisioning:/etc/grafana/provisioning

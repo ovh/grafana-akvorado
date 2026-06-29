@@ -4,6 +4,9 @@
   "name": "Akvorado",
   "id": "ovhcloud-akvorado-datasource",
   "metrics": true,
+  "backend": true,
+  "alerting": true,
+  "executable": "gpx_akvorado",
   "info": {
     "description": "Akvorado netflow data source using akvorado api",
     "author": {
@@ -37,17 +40,11 @@
     "updated": "%TODAY%"
   },
   "dependencies": {
-    "grafanaDependency": ">=10.3.3",
+    "grafanaDependency": ">=10.4.0",
     "plugins": [{
       "id": "netsage-sankey-panel",
       "name": "Sankey Panel",
       "type": "panel"
     }]
-  },
-  "routes": [
-    {
-      "path": "akvorado-root",
-      "url": "{{ .JsonData.url }}"
-    }
-  ]
+  }
 }
