@@ -1,99 +1,115 @@
 {
-  "@codemirror/autocomplete@6.17.0": {
+  "@codemirror/autocomplete@6.20.3": {
     "licenses": "MIT",
-    "repository": "https://github.com/codemirror/autocomplete",
+    "repository": "git+https://code.haverbeke.berlin/codemirror/autocomplete",
     "publisher": "Marijn Haverbeke",
     "email": "marijn@haverbeke.berlin",
     "url": "http://marijnhaverbeke.nl",
-    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@codemirror/autocomplete",
-    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@codemirror/autocomplete/LICENSE"
+    "path": "/home/fabian/Repo/grafana-akvorado/node_modules/@codemirror/autocomplete",
+    "licenseFile": "/home/fabian/Repo/grafana-akvorado/node_modules/@codemirror/autocomplete/LICENSE"
   },
-  "@codemirror/state@6.4.1": {
+  "@codemirror/state@6.7.1": {
     "licenses": "MIT",
-    "repository": "https://github.com/codemirror/state",
+    "repository": "git+https://code.haverbeke.berlin/codemirror/state",
     "publisher": "Marijn Haverbeke",
     "email": "marijn@haverbeke.berlin",
     "url": "http://marijnhaverbeke.nl",
-    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@codemirror/state",
-    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@codemirror/state/LICENSE"
+    "path": "/home/fabian/Repo/grafana-akvorado/node_modules/@codemirror/state",
+    "licenseFile": "/home/fabian/Repo/grafana-akvorado/node_modules/@codemirror/state/LICENSE"
   },
   "@emotion/css@11.10.6": {
     "licenses": "MIT",
     "repository": "https://github.com/emotion-js/emotion/tree/main/packages/css",
     "publisher": "Kye Hohenberger",
-    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@emotion/css",
-    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@emotion/css/LICENSE"
+    "path": "/home/fabian/Repo/grafana-akvorado/node_modules/@emotion/css",
+    "licenseFile": "/home/fabian/Repo/grafana-akvorado/node_modules/@emotion/css/LICENSE"
   },
-  "@grafana/data@10.3.3": {
+  "@grafana/data@13.1.0": {
     "licenses": "Apache-2.0",
     "repository": "https://github.com/grafana/grafana",
     "publisher": "Grafana Labs",
-    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/data",
-    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/data/README.md"
+    "path": "/home/fabian/Repo/grafana-akvorado/node_modules/@grafana/data",
+    "licenseFile": "/home/fabian/Repo/grafana-akvorado/node_modules/@grafana/data/README.md"
   },
-  "@grafana/runtime@10.3.3": {
+  "@grafana/i18n@13.1.0": {
     "licenses": "Apache-2.0",
     "repository": "https://github.com/grafana/grafana",
     "publisher": "Grafana Labs",
-    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/runtime",
-    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/runtime/README.md"
+    "path": "/home/fabian/Repo/grafana-akvorado/node_modules/@grafana/i18n",
+    "licenseFile": "/home/fabian/Repo/grafana-akvorado/node_modules/@grafana/i18n/README.md"
   },
-  "@grafana/schema@10.3.3": {
+  "@grafana/runtime@13.1.0": {
     "licenses": "Apache-2.0",
     "repository": "https://github.com/grafana/grafana",
     "publisher": "Grafana Labs",
-    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/schema",
-    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/schema/README.md"
+    "path": "/home/fabian/Repo/grafana-akvorado/node_modules/@grafana/runtime",
+    "licenseFile": "/home/fabian/Repo/grafana-akvorado/node_modules/@grafana/runtime/README.md"
   },
-  "@grafana/ui@10.3.3": {
+  "@grafana/schema@13.1.0": {
     "licenses": "Apache-2.0",
     "repository": "https://github.com/grafana/grafana",
     "publisher": "Grafana Labs",
-    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/ui",
-    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@grafana/ui/README.md"
+    "path": "/home/fabian/Repo/grafana-akvorado/node_modules/@grafana/schema",
+    "licenseFile": "/home/fabian/Repo/grafana-akvorado/node_modules/@grafana/schema/README.md"
   },
-  "@lezer/generator@1.7.1": {
+  "@grafana/ui@13.1.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/grafana/grafana",
+    "publisher": "Grafana Labs",
+    "path": "/home/fabian/Repo/grafana-akvorado/node_modules/@grafana/ui",
+    "licenseFile": "/home/fabian/Repo/grafana-akvorado/node_modules/@grafana/ui/README.md"
+  },
+  "@lezer/generator@1.8.0": {
     "licenses": "MIT",
     "repository": "https://github.com/lezer-parser/generator",
     "publisher": "Marijn Haverbeke",
     "email": "marijn@haverbeke.berlin",
-    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@lezer/generator",
-    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@lezer/generator/LICENSE"
+    "path": "/home/fabian/Repo/grafana-akvorado/node_modules/@lezer/generator",
+    "licenseFile": "/home/fabian/Repo/grafana-akvorado/node_modules/@lezer/generator/LICENSE"
   },
-  "@lezer/lr@1.4.2": {
+  "@lezer/lr@1.4.10": {
     "licenses": "MIT",
-    "repository": "https://github.com/lezer-parser/lr",
+    "repository": "git+https://code.haverbeke.berlin/lezer/lr",
     "publisher": "Marijn Haverbeke",
     "email": "marijn@haverbeke.berlin",
-    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@lezer/lr",
-    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@lezer/lr/LICENSE"
+    "path": "/home/fabian/Repo/grafana-akvorado/node_modules/@lezer/lr",
+    "licenseFile": "/home/fabian/Repo/grafana-akvorado/node_modules/@lezer/lr/LICENSE"
   },
-  "@uiw/react-codemirror@4.23.0": {
+  "@uiw/react-codemirror@4.25.11": {
     "licenses": "MIT",
     "repository": "https://github.com/uiwjs/react-codemirror",
     "publisher": "kenny wong",
     "email": "wowohoo@qq.com",
-    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@uiw/react-codemirror",
-    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/@uiw/react-codemirror/README.md"
+    "path": "/home/fabian/Repo/grafana-akvorado/node_modules/@uiw/react-codemirror",
+    "licenseFile": "/home/fabian/Repo/grafana-akvorado/node_modules/@uiw/react-codemirror/README.md"
   },
-  "react-dom@18.2.0": {
+  "react-dom@18.3.1": {
     "licenses": "MIT",
     "repository": "https://github.com/facebook/react",
-    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/react-dom",
-    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/react-dom/LICENSE"
+    "path": "/home/fabian/Repo/grafana-akvorado/node_modules/react-dom",
+    "licenseFile": "/home/fabian/Repo/grafana-akvorado/node_modules/react-dom/LICENSE"
   },
-  "react@18.2.0": {
+  "react-router-dom@6.30.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/remix-run/react-router",
+    "publisher": "Remix Software",
+    "email": "hello@remix.run",
+    "path": "/home/fabian/Repo/grafana-akvorado/node_modules/react-router-dom",
+    "licenseFile": "/home/fabian/Repo/grafana-akvorado/node_modules/react-router-dom/LICENSE.md"
+  },
+  "react@18.3.1": {
     "licenses": "MIT",
     "repository": "https://github.com/facebook/react",
-    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/react",
-    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/react/LICENSE"
+    "path": "/home/fabian/Repo/grafana-akvorado/node_modules/react",
+    "licenseFile": "/home/fabian/Repo/grafana-akvorado/node_modules/react/LICENSE"
   },
-  "tslib@2.5.3": {
-    "licenses": "0BSD",
-    "repository": "https://github.com/Microsoft/tslib",
-    "publisher": "Microsoft Corp.",
-    "path": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/tslib",
-    "licenseFile": "/home/qmouty/IdeaProjects/grafana-akvorado/node_modules/tslib/LICENSE.txt"
+  "rxjs@7.8.2": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/reactivex/rxjs",
+    "publisher": "Ben Lesh",
+    "email": "ben@benlesh.com",
+    "path": "/home/fabian/Repo/grafana-akvorado/node_modules/rxjs",
+    "licenseFile": "/home/fabian/Repo/grafana-akvorado/node_modules/rxjs/LICENSE.txt"
   }
 }
 
