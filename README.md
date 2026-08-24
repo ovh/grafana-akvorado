@@ -6,6 +6,17 @@ Plugin to display akvorado data
 
 This plugin aim to allow user to display [akvorado](https://github.com/akvorado/akvorado) data directly in Grafana.
 
+## Requirements
+
+- Grafana 12.3.0 or later. Grafana 13 uses React 19, and the plugin takes
+  `react/jsx-runtime` from Grafana instead of bundling its own copy. Grafana
+  releases before 12.3.0 do not provide it.
+- Node 22 or later, to build the plugin.
+- Go 1.26 or later, to build the backend.
+
+Version 2.0.0 is verified against Grafana 13.1.3. Use version 1.0.37 on Grafana
+10 and 11.
+
 ## Run locally
 
 To run locally the plugin:
@@ -14,6 +25,12 @@ To run locally the plugin:
 npm install
 npm run build
 npm run server
+```
+
+This starts Grafana 13.1.3. To try another release, set `GRAFANA_VERSION`:
+
+```
+GRAFANA_VERSION=12.3.0 npm run server
 ```
 
 ### Use sankey plugin with docker compose

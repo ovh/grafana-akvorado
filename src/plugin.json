@@ -12,7 +12,9 @@
     "author": {
       "name": "ovhcloud"
     },
-    "keywords": ["datasource"],
+    "keywords": [
+      "datasource"
+    ],
     "logos": {
       "small": "img/logo.svg",
       "large": "img/logo.svg"
@@ -40,11 +42,13 @@
     "updated": "%TODAY%"
   },
   "dependencies": {
-    "grafanaDependency": ">=10.4.0",
-    "plugins": [{
-      "id": "netsage-sankey-panel",
-      "name": "Sankey Panel",
-      "type": "panel"
-    }]
+    "grafanaDependency": ">=12.3.0",
+    "plugins": [
+      {
+        "id": "netsage-sankey-panel",
+        "name": "Sankey Panel",
+        "type": "panel"
+      }
+    ]
   }
 }
