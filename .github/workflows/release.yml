@@ -7,10 +7,17 @@ on:
 
 permissions: read-all
 
+env:
+  # Pinned so a validator release cannot change the gate under us.
+  PLUGIN_VALIDATOR_VERSION: '0.45.6'
+
 jobs:
   release:
     permissions:
       contents: write
+      # Both are required to publish a build provenance attestation.
+      id-token: write
+      attestations: write
     runs-on: ubuntu-latest
     env:
       GRAFANA_ACCESS_POLICY_TOKEN: ${{ secrets.GRAFANA_ACCESS_POLICY_TOKEN }}
@@ -20,7 +27,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -67,6 +74,23 @@ jobs:
           zip ${{ steps.metadata.outputs.archive }} ${{ steps.metadata.outputs.plugin-id }} -r
           sha1sum ${{ steps.metadata.outputs.archive }} | cut -f1 -d' ' > ${{ steps.metadata.outputs.archive }}.sha1
 
+      # The Grafana submission runs this same validator. Running it here means a
+      # rejection shows up in CI instead of days later in the review queue.
+      # It fails the job on any error, warnings do not fail it.
+      - name: Validate plugin
+        run: |
+          BASE="https://github.com/grafana/plugin-validator/releases/download"
+          curl -sSL "${BASE}/plugin-validator%2Fv${PLUGIN_VALIDATOR_VERSION}/plugin-validator_${PLUGIN_VALIDATOR_VERSION}_linux_amd64.tar.gz" \
+            | tar xz plugincheck2
+          ./plugincheck2 \
+            -sourceCodeUri "file://${GITHUB_WORKSPACE}" \
+            "${{ steps.metadata.outputs.archive }}"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ./${{ steps.metadata.outputs.archive }}
+
       - name: Create Github release
         uses: softprops/action-gh-release@v2
         with:
@@ -75,3 +99,28 @@ jobs:
           files: |
             ./${{ steps.metadata.outputs.archive }}
             ./${{ steps.metadata.outputs.archive }}.sha1
+
+      # Grafana has no API to submit a plugin. A human fills the form at
+      # https://grafana.com/orgs/ovhcloud/plugins -> Submit Update.
+      # This step prints exactly what that form asks for.
+      - name: Print the plugin submission form values
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          ARCHIVE="${{ steps.metadata.outputs.archive }}"
+          BASE="https://github.com/${GITHUB_REPOSITORY}"
+
+          {
+            echo "## Grafana plugin submission"
+            echo
+            echo "Publish the draft release first. The URLs below 404 while it stays a draft."
+            echo
+            echo "Then go to <https://grafana.com/orgs/ovhcloud/plugins> -> **${{ steps.metadata.outputs.plugin-id }}** -> **Submit Update**."
+            echo
+            echo "| Form field | Value |"
+            echo "| --- | --- |"
+            echo "| OS & Architecture | Single (the archive carries every platform binary) |"
+            echo "| URL | \`${BASE}/releases/download/${TAG}/${ARCHIVE}\` |"
+            echo "| Source code URL | \`${BASE}/tree/${TAG}\` |"
+            echo "| SHA1 | \`$(cat "${ARCHIVE}.sha1")\` |"
+            echo "| Provisioning configured | Yes (\`provisioning/\`) |"
+          } >> "$GITHUB_STEP_SUMMARY"
