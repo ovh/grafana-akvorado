@@ -23,6 +23,10 @@ on:
 
 permissions: read-all
 
+env:
+  # Pinned so a validator release cannot change the gate under us.
+  PLUGIN_VALIDATOR_VERSION: '0.45.6'
+
 jobs:
   build:
     name: Build, lint and unit tests
@@ -39,7 +43,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -66,7 +70,7 @@ jobs:
         if: steps.check-for-backend.outputs.has-backend == 'true'
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.26'
 
       - name: Test backend
         if: steps.check-for-backend.outputs.has-backend == 'true'
@@ -113,6 +117,17 @@ jobs:
           mv dist ${{ steps.metadata.outputs.plugin-id }}
           zip ${{ steps.metadata.outputs.archive }} ${{ steps.metadata.outputs.plugin-id }} -r
 
+      # Same validator Grafana runs on a submission. Catching a rejection here
+      # costs a CI minute; catching it in the review queue costs days.
+      - name: Validate plugin
+        run: |
+          BASE="https://github.com/grafana/plugin-validator/releases/download"
+          curl -sSL "${BASE}/plugin-validator%2Fv${PLUGIN_VALIDATOR_VERSION}/plugin-validator_${PLUGIN_VALIDATOR_VERSION}_linux_amd64.tar.gz" \
+            | tar xz plugincheck2
+          ./plugincheck2 \
+            -sourceCodeUri "file://${GITHUB_WORKSPACE}" \
+            "${{ steps.metadata.outputs.archive }}"
+
       - name: Archive Build
         uses: actions/upload-artifact@v4
         with:
@@ -127,13 +142,32 @@ jobs:
     needs: build
     if: ${{ needs.build.outputs.has-e2e == 'true' }}
     outputs:
-      matrix: ${{ steps.resolve-versions.outputs.matrix }}
+      matrix: ${{ steps.pin-versions.outputs.matrix }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Resolve Grafana E2E versions
         id: resolve-versions
         uses: grafana/plugin-actions/e2e-version@main
+        with:
+          version-resolver-type: plugin-grafana-dependency
+          skip-grafana-nightly-image: true
+
+      # The resolver picks versions from grafanaDependency in src/plugin.json.
+      # We always add the declared floor and the release we certify the plugin
+      # against, so a resolver change can never silently drop either of them.
+      - name: Pin the floor and the certified release
+        id: pin-versions
+        run: |
+          PINNED='[{"name":"grafana-enterprise","version":"12.3.0"},{"name":"grafana-enterprise","version":"13.1.3"}]'
+          MATRIX=$(jq -c -n \
+            --argjson resolved '${{ steps.resolve-versions.outputs.matrix }}' \
+            --argjson pinned "$PINNED" \
+            '($resolved + $pinned)
+              | map({name: (.name // .NAME), version: (.version // .VERSION)})
+              | unique_by("\(.name)@\(.version)")')
+          echo "matrix=${MATRIX}" >> "$GITHUB_OUTPUT"
+          echo "E2E matrix: ${MATRIX}"
 
   playwright-tests:
     needs: [resolve-versions, build]
@@ -161,7 +195,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dev dependencies

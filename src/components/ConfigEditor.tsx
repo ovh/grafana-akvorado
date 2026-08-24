@@ -1,22 +1,33 @@
 import React from 'react';
-import { DataSourceHttpSettings } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import {
+  AdvancedHttpSettings,
+  Auth,
+  ConfigSection,
+  ConnectionSettings,
+  convertLegacyAuthProps,
+} from '@grafana/plugin-ui';
+
 import { MyDataSourceOptions } from '../types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
 
-
-export function ConfigEditor(props: Props) {
-  const { onOptionsChange, options } = props;
+export function ConfigEditor({ options, onOptionsChange }: Props) {
   return (
     <>
-      <DataSourceHttpSettings
-        defaultUrl="https://demo.akvorado.net"
-        dataSourceConfig={options}
+      <ConnectionSettings
+        config={options}
         onChange={onOptionsChange}
-        sigV4AuthToggleEnabled={true}
+        urlLabel="Akvorado URL"
+        urlPlaceholder="https://demo.akvorado.net"
+        urlTooltip="Base URL of the Akvorado console. The plugin appends /api/v0/console/... to it."
       />
+
+      <Auth {...convertLegacyAuthProps({ config: options, onChange: onOptionsChange })} />
+
+      <ConfigSection title="Advanced settings" isCollapsible isInitiallyOpen={false}>
+        <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
+      </ConfigSection>
     </>
   );
-
 }
