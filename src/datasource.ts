@@ -33,9 +33,11 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
     return {
       ...query,
       expression: query.expression ? tmpl.replace(query.expression, scopedVars) : query.expression,
-      limit: query.limit ? tmpl.replace(query.limit, scopedVars) : query.limit,
-      truncatev4: query.truncatev4 ? tmpl.replace(query.truncatev4, scopedVars) : query.truncatev4,
-      truncatev6: query.truncatev6 ? tmpl.replace(query.truncatev6, scopedVars) : query.truncatev6,
+      /* String() because a saved dashboard can hold a number here, and the
+         template service replaces variables in strings only. */
+      limit: query.limit ? tmpl.replace(String(query.limit), scopedVars) : query.limit,
+      truncatev4: query.truncatev4 ? tmpl.replace(String(query.truncatev4), scopedVars) : query.truncatev4,
+      truncatev6: query.truncatev6 ? tmpl.replace(String(query.truncatev6), scopedVars) : query.truncatev6,
     };
   }
 
