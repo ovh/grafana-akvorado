@@ -1,8 +1,16 @@
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { InlineField, Input, Stack, Select, AsyncMultiSelect, useTheme2, CollapsableSection } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, AppEvents } from '@grafana/data';
 import { DataSource, queryTypes, queryUnits } from '../datasource';
-import { DEFAULT_LIMIT, DEFAULT_QUERY, MyDataSourceOptions, MyQuery } from '../types';
+import { DEFAULT_QUERY, MyDataSourceOptions, MyQuery } from '../types';
+import {
+  DEFAULT_MAX_LIMIT,
+  MAX_TRUNCATE_V4,
+  MAX_TRUNCATE_V6,
+  SANKEY_DIMENSIONS_ERROR,
+  firstError,
+  validateQuery,
+} from '../queryValidation';
 
 import { getAppEvents } from '@grafana/runtime';
 import CodeMirror, { EditorView, placeholder } from '@uiw/react-codemirror';
@@ -17,11 +25,29 @@ const appEvents = getAppEvents();
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 export function QueryEditor({ query, onChange, datasource }: Props) {
-  const { limit, type, unit, dimensions, expression, truncatev4, truncatev6, topType } = query;
+  const { type, unit, dimensions, expression, topType } = query;
   const [uiDimensions, setUIDimensions] = useState<Array<SelectableValue<string>>>(
     dimensions?.map((v) => ({ label: v, value: v })) ?? [{ label: 'SrcAS', value: 'SrcAS' }]
   );
   const [containsAddr, setContainsAddr] = useState(false);
+  const [maxLimit, setMaxLimit] = useState(DEFAULT_MAX_LIMIT);
+
+  /* Akvorado refuses a limit above its own dimensionsLimit, so the check uses
+     the value the console reports and falls back to the shipped default. */
+  useEffect(() => {
+    let live = true;
+    datasource
+      .getConfiguration()
+      .then((config) => {
+        if (live && config?.dimensionsLimit) {
+          setMaxLimit(config.dimensionsLimit);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [datasource]);
 
   useEffect(() => {
     const addrCheck = uiDimensions.some(dim => dim.value !== undefined && dim.value.includes('Addr'));
@@ -39,6 +65,32 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
 
 
 
+
+  /*
+  A query can reach the editor without these values, and the query then runs on
+  the documented defaults. `??` fills the box for that case only: an empty
+  string is a deliberate clear, so it stays empty and warns.
+  */
+  const effectiveQuery: MyQuery = useMemo(
+    () => ({
+      ...query,
+      limit: query.limit ?? DEFAULT_QUERY.limit!!,
+      truncatev4: query.truncatev4 ?? DEFAULT_QUERY.truncatev4!!,
+      truncatev6: query.truncatev6 ?? DEFAULT_QUERY.truncatev6!!,
+    }),
+    [query]
+  );
+  const validationErrors = validateQuery(effectiveQuery, { maxLimit, withTruncate: containsAddr });
+  const queryError = firstError(validationErrors);
+
+  /* filterQuery skips a query that carries an error, so a value the query
+     cannot use stops the request and shows the warning, instead of running
+     with a default nobody asked for. */
+  useEffect(() => {
+    if ((query.error ?? undefined) !== queryError) {
+      onChange({ ...query, error: queryError });
+    }
+  }, [query, queryError, onChange]);
 
   const theme = useTheme2();
 
@@ -80,28 +132,23 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
   const onDimensionsChange = (selected: Array<SelectableValue<string>>) => {
     const newdimensions = selected.map((v) => v.value).filter((v): v is string => v !== undefined);
     setUIDimensions(selected);
-    onChange({ ...query, dimensions: newdimensions });
-    let myerror: string | undefined;
-    if (query.type === 'sankey' && newdimensions && newdimensions.length < 2) {
-      let myerror = "At least two dimensions are required for 'sankey' type queries.";
+    if (query.type === 'sankey' && newdimensions.length < 2) {
       appEvents.publish({
         type: AppEvents.alertError.name,
-        payload: [myerror],
+        payload: [SANKEY_DIMENSIONS_ERROR],
       });
     }
-    onChange({ ...query, dimensions: newdimensions, error: myerror });
+    onChange({ ...query, dimensions: newdimensions });
   };
 
   const onTypeChange = (item: SelectableValue<string>) => {
-    let myerror: string | undefined;
-    if (item.value === 'sankey' && dimensions && dimensions.length < 2) {
-      myerror = "At least two dimensions are required for 'sankey' type queries.";
+    if (item.value === 'sankey' && (dimensions?.length ?? 0) < 2) {
       appEvents.publish({
         type: AppEvents.alertError.name,
-        payload: [myerror],
+        payload: [SANKEY_DIMENSIONS_ERROR],
       });
     }
-    onChange({ ...query, type: item.value || '', error: myerror });
+    onChange({ ...query, type: item.value || '' });
   };
 
   const onUnitChange = (item: SelectableValue<string>) => {
@@ -147,7 +194,13 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
         <InlineField label="Unit" labelWidth={16} tooltip="Select the unit">
           <Select value={unit} options={queryUnitsOptions()} onChange={onUnitChange} width={20} />
         </InlineField>
-        <InlineField label="Dimensions" labelWidth={16} tooltip="Select dimensions">
+        <InlineField
+          label="Dimensions"
+          labelWidth={16}
+          tooltip="Select dimensions"
+          invalid={!!validationErrors.dimensions}
+          error={validationErrors.dimensions}
+        >
           <AsyncMultiSelect
             defaultOptions
             placeholder="Select dimensions"
@@ -157,11 +210,17 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
             width={32}
           />
         </InlineField>
-        <InlineField label="Limit" labelWidth={16} tooltip="Number of results returned by the query (max 50)">
+        <InlineField
+          label="Limit"
+          labelWidth={16}
+          tooltip={`Number of results returned by the query (max ${maxLimit})`}
+          invalid={!!validationErrors.limit}
+          error={validationErrors.limit}
+        >
           <Input
             id="limit"
             type="text"
-            value={limit || DEFAULT_LIMIT}
+            value={effectiveQuery.limit}
             onChange={onLimitChange}
             placeholder="Enter limit"
             width={10}
@@ -215,24 +274,36 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
       </Stack>
       {containsAddr && (
         <Stack>
-          <InlineField label="IPv4 /x" labelWidth={16} tooltip="IPv4 /x">
+          <InlineField
+            label="IPv4 /x"
+            labelWidth={16}
+            tooltip="IPv4 /x"
+            invalid={!!validationErrors.truncatev4}
+            error={validationErrors.truncatev4}
+          >
             <Input
               id="uiTruncatedV4"
               type="number"
-              value={truncatev4 || '32' }
+              value={effectiveQuery.truncatev4}
               onChange={onTruncatedV4Change}
               min={0}
-              max={32}
+              max={MAX_TRUNCATE_V4}
             />
           </InlineField>
-          <InlineField label="IPv6 /x" labelWidth={16} tooltip="IPv6 /x">
+          <InlineField
+            label="IPv6 /x"
+            labelWidth={16}
+            tooltip="IPv6 /x"
+            invalid={!!validationErrors.truncatev6}
+            error={validationErrors.truncatev6}
+          >
             <Input
               id="uiTruncatedV6"
               type="number"
-              value={truncatev6 || '128' }
+              value={effectiveQuery.truncatev6}
               onChange={onTruncatedV6Change}
               min={0}
-              max={128}
+              max={MAX_TRUNCATE_V6}
             />
           </InlineField>
           <InlineField label="Top by" labelWidth={16} tooltip="Way to fetch the limit">

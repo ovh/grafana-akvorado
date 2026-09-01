@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.0.2
+
+### Fixed
+
+- The Limit, IPv4 /x and IPv6 /x boxes no longer refuse to be cleared. They
+  rendered `value || <default>`, so deleting the number put the default straight
+  back and you could not type a new one. Each box now shows what the query
+  holds.
+
+### Changed
+
+- A value the query cannot use gets a warning instead of a silent default. The
+  query editor shows the reason under the field (required, not a whole number,
+  out of range) and holds the query back until it is fixed. The limit range
+  follows the `dimensionsLimit` the Akvorado console reports.
+- A dashboard that holds an unreadable value still runs with the default, and
+  the panel now carries a warning that names the field and the value it
+  ignored.
+
 ## 2.0.1
 
 ### Fixed

@@ -61,4 +61,27 @@ test.describe('akvorado frontend', () => {
 
     expect(errors, `React errors while mounting the query editor:\n${errors.join('\n')}`).toEqual([]);
   });
+
+  /*
+  Clearing the limit used to snap the box back to 10, because the input
+  rendered `limit || DEFAULT_LIMIT`. An empty box now stays empty and warns.
+  */
+  test('clearing the limit keeps the box empty and warns', async ({ panelEditPage, createDataSource, page }) => {
+    const ds = await createDataSource({ type: PLUGIN_TYPE, url: AKVORADO_URL });
+    await panelEditPage.datasource.set(ds.name);
+
+    const limit = page.locator('#limit');
+    await expect(limit).toHaveValue('10');
+
+    await limit.fill('');
+    await expect(limit).toHaveValue('');
+    await expect(page.getByText('Limit is required.')).toBeVisible();
+
+    await limit.fill('60');
+    await expect(page.getByText(/Limit must be between 1 and \d+\./)).toBeVisible();
+
+    await limit.fill('5');
+    await expect(limit).toHaveValue('5');
+    await expect(page.getByText('Limit is required.')).toBeHidden();
+  });
 });

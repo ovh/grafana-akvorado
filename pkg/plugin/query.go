@@ -142,6 +142,52 @@ func (qm queryModel) toAkvoradoQuery(tr backend.TimeRange) akvoradoQuery {
 	}
 }
 
+/*
+warnings names every field the query could not read. The query still runs with
+the default, but the panel says which value it ignored: a silent substitution
+is what hides a broken dashboard.
+*/
+func (qm queryModel) warnings() []string {
+	fields := []struct {
+		name  string
+		value numberOrString
+		def   int
+	}{
+		{"limit", qm.Limit, 10},
+		{"truncatev4", qm.TruncateV4, 32},
+		{"truncatev6", qm.TruncateV6, 128},
+	}
+
+	var warnings []string
+	for _, f := range fields {
+		text := strings.TrimSpace(string(f.value))
+		if text == "" {
+			/* Absent, null or empty: the value is not set, not broken. */
+			continue
+		}
+		if _, ok := parseInt(text); !ok {
+			warnings = append(warnings, fmt.Sprintf("%s %q is not a number: the query used %d.", f.name, text, f.def))
+		}
+	}
+	return warnings
+}
+
+func addNotices(frame *data.Frame, warnings []string) *data.Frame {
+	if len(warnings) == 0 {
+		return frame
+	}
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+	for _, w := range warnings {
+		frame.Meta.Notices = append(frame.Meta.Notices, data.Notice{
+			Severity: data.NoticeSeverityWarning,
+			Text:     w,
+		})
+	}
+	return frame
+}
+
 func buildTimeseriesFrames(qm queryModel, raw []byte) backend.DataResponse {
 	var resp timeseriesResponse
 	if err := json.Unmarshal(raw, &resp); err != nil {
@@ -176,7 +222,7 @@ func buildTimeseriesFrames(qm queryModel, raw []byte) backend.DataResponse {
 		frame.Fields = append(frame.Fields, data.NewField(name, labels, values))
 	}
 
-	return backend.DataResponse{Frames: data.Frames{frame}}
+	return backend.DataResponse{Frames: data.Frames{addNotices(frame, qm.warnings())}}
 }
 
 func buildSankeyFrames(qm queryModel, raw []byte) backend.DataResponse {
@@ -213,7 +259,7 @@ func buildSankeyFrames(qm queryModel, raw []byte) backend.DataResponse {
 	}
 	frame.Fields = append(frame.Fields, data.NewField("value", nil, values))
 
-	return backend.DataResponse{Frames: data.Frames{frame}}
+	return backend.DataResponse{Frames: data.Frames{addNotices(frame, qm.warnings())}}
 }
 
 func buildLabels(dimensions []string, row []string) data.Labels {
@@ -228,19 +274,28 @@ func buildLabels(dimensions []string, row []string) data.Labels {
 }
 
 func parseIntDefault(s string, def int) int {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return def
-	}
-	if n, err := strconv.Atoi(s); err == nil {
+	if n, ok := parseInt(strings.TrimSpace(s)); ok {
 		return n
 	}
-	/* A dashboard can hold 10.0 instead of 10. Anything else, an unresolved
-	   template variable included, keeps the default. */
-	if f, err := strconv.ParseFloat(s, 64); err == nil && f == math.Trunc(f) && math.Abs(f) <= math.MaxInt32 {
-		return int(f)
-	}
 	return def
+}
+
+/*
+parseInt reads a whole number, written as an integer or as a whole float such
+as 10.0. Anything else, an unresolved template variable included, cannot be
+read.
+*/
+func parseInt(s string) (int, bool) {
+	if s == "" {
+		return 0, false
+	}
+	if n, err := strconv.Atoi(s); err == nil {
+		return n, true
+	}
+	if f, err := strconv.ParseFloat(s, 64); err == nil && f == math.Trunc(f) && math.Abs(f) <= math.MaxInt32 {
+		return int(f), true
+	}
+	return 0, false
 }
 
 func toStatus(httpStatus int) backend.Status {
