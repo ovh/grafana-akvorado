@@ -22,6 +22,11 @@
   sit in grouped rows, each label above its box, and the filter expression owns
   its own row. A warning now appears under its own field, inside the row,
   instead of a floating message that ran off the edge of a narrow panel pane.
+- The query runs when you change it. Committing a value (leaving a box, picking
+  from a list, leaving the filter editor) runs the query, and a new "Run query"
+  button in the query row runs it on demand. Before this, an edit only reached
+  the panel through the Refresh button. A query that carries a warning does not
+  run, and the button says so.
 - "Top by" is always available. It applies to every query, but it only appeared
   when a dimension carried an address.
 - The IPv4 and IPv6 boxes are labelled "IPv4 prefix length" and "IPv6 prefix

@@ -84,4 +84,22 @@ test.describe('akvorado frontend', () => {
     await expect(limit).toHaveValue('5');
     await expect(page.getByText('Limit is required.')).toBeHidden();
   });
+
+  /*
+  The query row carries a Run query button. The run itself cannot be asserted
+  here: the panelEditPage fixture issues no query of its own, so the counter
+  never moves. It is checked against a live dashboard instead, where a click
+  fires one /api/ds/query each time.
+  */
+  test('the query row carries a Run query button', async ({ panelEditPage, createDataSource, page }) => {
+    const ds = await createDataSource({ type: PLUGIN_TYPE, url: AKVORADO_URL });
+    await panelEditPage.datasource.set(ds.name);
+
+    const row = page.locator('[data-testid="data-testid Query editor row"]').first();
+    const run = row.getByTestId('akvorado-run-query');
+
+    await expect(run).toBeVisible();
+    await expect(run).toBeEnabled();
+    await expect(run).toHaveText('Run query');
+  });
 });

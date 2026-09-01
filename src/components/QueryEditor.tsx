@@ -1,8 +1,8 @@
 import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { Input, Select, AsyncMultiSelect, useTheme2, useStyles2 } from '@grafana/ui';
-import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
-import { QueryEditorProps, SelectableValue, AppEvents } from '@grafana/data';
+import { EditorField, EditorFieldGroup, EditorRow, EditorRows, FlexItem, RunQueryButton } from '@grafana/plugin-ui';
+import { QueryEditorProps, SelectableValue, AppEvents, CoreApp } from '@grafana/data';
 import { DataSource, queryTypes, queryUnits } from '../datasource';
 import { DEFAULT_QUERY, MyDataSourceOptions, MyQuery } from '../types';
 import {
@@ -26,7 +26,7 @@ import { tags as t } from '@lezer/highlight';
 const appEvents = getAppEvents();
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
-export function QueryEditor({ query, onChange, datasource }: Props) {
+export function QueryEditor({ query, onChange, onRunQuery, datasource, app }: Props) {
   const { type, unit, dimensions, expression, topType } = query;
   const [uiDimensions, setUIDimensions] = useState<Array<SelectableValue<string>>>(
     dimensions?.map((v) => ({ label: v, value: v })) ?? [{ label: 'SrcAS', value: 'SrcAS' }]
@@ -63,6 +63,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
     const value = item.value!!;
     setUITopType(value);
     onChange({ ...query, topType: value });
+    runQuery();
   };
 
 
@@ -93,6 +94,16 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
       onChange({ ...query, error: queryError });
     }
   }, [query, queryError, onChange]);
+
+  /* Nothing re-ran the query before: an edit only reached the panel through
+     the Refresh button. Every commit of a value now runs it, and the Run query
+     button runs it on demand. A query that carries a warning does not run,
+     because filterQuery drops it anyway. */
+  const runQuery = () => {
+    if (!queryError) {
+      onRunQuery();
+    }
+  };
 
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -142,6 +153,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
       });
     }
     onChange({ ...query, dimensions: newdimensions });
+    runQuery();
   };
 
   const onTypeChange = (item: SelectableValue<string>) => {
@@ -152,10 +164,12 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
       });
     }
     onChange({ ...query, type: item.value || '' });
+    runQuery();
   };
 
   const onUnitChange = (item: SelectableValue<string>) => {
     onChange({ ...query, unit: item.value!! });
+    runQuery();
   };
 
   const onLimitChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -223,6 +237,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
               type="text"
               value={effectiveQuery.limit}
               onChange={onLimitChange}
+              onBlur={runQuery}
               placeholder="Enter limit"
               width={8}
             />
@@ -237,6 +252,18 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
             />
           </EditorField>
         </EditorFieldGroup>
+        <FlexItem grow={1} />
+        {/* Explore carries its own run button. */}
+        {app !== CoreApp.Explore && (
+          <div className={styles.runQuery}>
+            <RunQueryButton
+              onClick={runQuery}
+              queryInvalid={!!queryError}
+              invalidQueryTooltip={queryError}
+              dataTestId="akvorado-run-query"
+            />
+          </div>
+        )}
       </EditorRow>
 
       <EditorRow>
@@ -261,6 +288,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
                   }
                   if (viewUpdate.focusChanged) {
                     if (!viewUpdate.view.hasFocus) {
+                      runQuery();
                       // Trim spaces
                       const index = viewUpdate.state.doc.toString().search(/\s+$/);
                       if (index !== -1) {
@@ -294,6 +322,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
                 type="number"
                 value={effectiveQuery.truncatev4}
                 onChange={onTruncatedV4Change}
+                onBlur={runQuery}
                 min={0}
                 max={MAX_TRUNCATE_V4}
                 width={8}
@@ -310,6 +339,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
                 type="number"
                 value={effectiveQuery.truncatev6}
                 onChange={onTruncatedV6Change}
+                onBlur={runQuery}
                 min={0}
                 max={MAX_TRUNCATE_V6}
                 width={8}
@@ -328,5 +358,10 @@ const getStyles = () => ({
   filter: css({
     flexGrow: 1,
     minWidth: 0,
+  }),
+  /* The fields carry a label above them, so the button lines up with the boxes
+     and not with the labels. */
+  runQuery: css({
+    alignSelf: 'flex-end',
   }),
 });
