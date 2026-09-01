@@ -86,17 +86,18 @@ test.describe('akvorado frontend', () => {
   });
 
   /*
-  The query row carries a Run query button. The run itself cannot be asserted
-  here: the panelEditPage fixture issues no query of its own, so the counter
-  never moves. It is checked against a live dashboard instead, where a click
-  fires one /api/ds/query each time.
+  The editor carries a Run query button. Two things cannot be asserted here.
+  The run itself: the panelEditPage fixture issues no query of its own, so a
+  request counter never moves; it is checked against a live dashboard instead.
+  And the button's place in the row: Grafana only emits the query-row test id
+  from 13.1, so scoping the lookup to it fails on every older version in the
+  matrix.
   */
-  test('the query row carries a Run query button', async ({ panelEditPage, createDataSource, page }) => {
+  test('the editor carries a Run query button', async ({ panelEditPage, createDataSource, page }) => {
     const ds = await createDataSource({ type: PLUGIN_TYPE, url: AKVORADO_URL });
     await panelEditPage.datasource.set(ds.name);
 
-    const row = page.locator('[data-testid="data-testid Query editor row"]').first();
-    const run = row.getByTestId('akvorado-run-query');
+    const run = page.getByTestId('akvorado-run-query');
 
     await expect(run).toBeVisible();
     await expect(run).toBeEnabled();
