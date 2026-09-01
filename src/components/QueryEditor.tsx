@@ -40,27 +40,21 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
 
 
 
-  const getFilterTheme = (isDark: boolean) => [
-    syntaxHighlighting(
-      HighlightStyle.define([
-        { tag: t.propertyName, color: isDark ? '#fb660a' : '#008800' },
-        { tag: t.string, color: isDark ? '#ff0086' : '#880000' },
-        { tag: t.comment, color: isDark ? '#7d8799' : '#4f4f4f' },
-        { tag: t.operator, color: isDark ? '#00a3ff' : '#333399' },
-      ])
-    ),
-    EditorView.theme({}, { dark: isDark }),
-  ];
   const theme = useTheme2();
 
-  const filterTheme = getFilterTheme(theme.isDark);
-  const getTheme = (isDark: boolean) => {
-    if (isDark) {
-      return 'dark';
-    } else {
-      return 'light';
-    }
-  };
+  /* Theme tokens, so the filter editor follows Grafana in both light and dark
+     mode instead of carrying its own hex values. */
+  const filterTheme = [
+    syntaxHighlighting(
+      HighlightStyle.define([
+        { tag: t.propertyName, color: theme.colors.primary.text },
+        { tag: t.string, color: theme.colors.success.text },
+        { tag: t.comment, color: theme.colors.text.secondary },
+        { tag: t.operator, color: theme.colors.warning.text },
+      ])
+    ),
+    EditorView.theme({}, { dark: theme.isDark }),
+  ];
 
   const loadAsyncDimensions = async (query: string): Promise<Array<SelectableValue<string>>> => {
     try {
@@ -178,7 +172,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
         <InlineField label="Filters" tooltip="Filters for the query" grow={true} labelWidth={16}>
           <CodeMirror
             value={uiExpression}
-            theme={getTheme(theme.isDark)}
+            theme={theme.isDark ? 'dark' : 'light'}
             extensions={[
               filterLanguage(),
               filterCompletion(datasource),

@@ -6,9 +6,10 @@ export interface MyQuery extends DataQuery {
   expression?: string;
   dimensions?: string[];
   type: string;
-  limit: string;
-  truncatev4: string;
-  truncatev6: string;
+  /* Saved dashboards hold these three either as a string or as a number. */
+  limit: string | number;
+  truncatev4: string | number;
+  truncatev6: string | number;
   topType: string;
   unit: string;
   error: string | undefined;

@@ -1,9 +1,11 @@
 package plugin
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -23,15 +25,42 @@ var queryEndpoints = map[string]string{
 }
 
 type queryModel struct {
-	Expression string   `json:"expression"`
-	Dimensions []string `json:"dimensions"`
-	Type       string   `json:"type"`
-	Limit      string   `json:"limit"`
-	TruncateV4 string   `json:"truncatev4"`
-	TruncateV6 string   `json:"truncatev6"`
-	TopType    string   `json:"topType"`
-	Unit       string   `json:"unit"`
-	Error      string   `json:"error,omitempty"`
+	Expression string         `json:"expression"`
+	Dimensions []string       `json:"dimensions"`
+	Type       string         `json:"type"`
+	Limit      numberOrString `json:"limit"`
+	TruncateV4 numberOrString `json:"truncatev4"`
+	TruncateV6 numberOrString `json:"truncatev6"`
+	TopType    string         `json:"topType"`
+	Unit       string         `json:"unit"`
+	Error      string         `json:"error,omitempty"`
+}
+
+/*
+numberOrString holds a value a dashboard can store either way. The query editor
+writes strings, but dashboards saved with earlier versions of the plugin (and
+the example dashboard in provisioning/) hold plain JSON numbers. Both decode
+into the raw text, and parseIntDefault turns it into a number.
+*/
+type numberOrString string
+
+func (n *numberOrString) UnmarshalJSON(b []byte) error {
+	b = bytes.TrimSpace(b)
+	switch {
+	case len(b) == 0, string(b) == "null":
+		*n = ""
+	case b[0] == '"':
+		var s string
+		if err := json.Unmarshal(b, &s); err != nil {
+			return err
+		}
+		*n = numberOrString(s)
+	default:
+		/* A number, or a value of a kind we do not expect: parseIntDefault
+		   holds the fallback for anything that is not a number. */
+		*n = numberOrString(b)
+	}
+	return nil
 }
 
 type akvoradoQuery struct {
@@ -82,22 +111,7 @@ func (d *Datasource) handleQuery(ctx context.Context, q backend.DataQuery) backe
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("unsupported query type: %q", qm.Type))
 	}
 
-	body := akvoradoQuery{
-		Bidirectional:  false,
-		Dimensions:     qm.Dimensions,
-		End:            q.TimeRange.To.UTC().Format(time.RFC3339Nano),
-		Filter:         qm.Expression,
-		Limit:          parseIntDefault(qm.Limit, 10),
-		Points:         200,
-		PreviousPeriod: false,
-		Start:          q.TimeRange.From.UTC().Format(time.RFC3339Nano),
-		TruncateV4:     parseIntDefault(qm.TruncateV4, 32),
-		TruncateV6:     parseIntDefault(qm.TruncateV6, 128),
-		LimitType:      qm.TopType,
-		Units:          qm.Unit,
-	}
-
-	raw, status, err := d.postJSON(ctx, endpoint, body)
+	raw, status, err := d.postJSON(ctx, endpoint, qm.toAkvoradoQuery(q.TimeRange))
 	if err != nil {
 		return backend.ErrDataResponse(toStatus(status), err.Error())
 	}
@@ -109,6 +123,23 @@ func (d *Datasource) handleQuery(ctx context.Context, q backend.DataQuery) backe
 		return buildSankeyFrames(qm, raw)
 	}
 	return backend.DataResponse{}
+}
+
+func (qm queryModel) toAkvoradoQuery(tr backend.TimeRange) akvoradoQuery {
+	return akvoradoQuery{
+		Bidirectional:  false,
+		Dimensions:     qm.Dimensions,
+		End:            tr.To.UTC().Format(time.RFC3339Nano),
+		Filter:         qm.Expression,
+		Limit:          parseIntDefault(string(qm.Limit), 10),
+		Points:         200,
+		PreviousPeriod: false,
+		Start:          tr.From.UTC().Format(time.RFC3339Nano),
+		TruncateV4:     parseIntDefault(string(qm.TruncateV4), 32),
+		TruncateV6:     parseIntDefault(string(qm.TruncateV6), 128),
+		LimitType:      qm.TopType,
+		Units:          qm.Unit,
+	}
 }
 
 func buildTimeseriesFrames(qm queryModel, raw []byte) backend.DataResponse {
@@ -197,14 +228,19 @@ func buildLabels(dimensions []string, row []string) data.Labels {
 }
 
 func parseIntDefault(s string, def int) int {
+	s = strings.TrimSpace(s)
 	if s == "" {
 		return def
 	}
-	n, err := strconv.Atoi(s)
-	if err != nil {
-		return def
+	if n, err := strconv.Atoi(s); err == nil {
+		return n
 	}
-	return n
+	/* A dashboard can hold 10.0 instead of 10. Anything else, an unresolved
+	   template variable included, keeps the default. */
+	if f, err := strconv.ParseFloat(s, 64); err == nil && f == math.Trunc(f) && math.Abs(f) <= math.MaxInt32 {
+		return int(f)
+	}
+	return def
 }
 
 func toStatus(httpStatus int) backend.Status {

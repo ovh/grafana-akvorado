@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.0.1
+
+### Fixed
+
+- Queries no longer fail when a dashboard holds `limit`, `truncatev4` or
+  `truncatev6` as a JSON number. Since 2.0.0 the backend refused to decode them
+  and the panel showed "No data" with `invalid query json: json: cannot
+  unmarshal number into Go struct field`. A number and a string now both decode,
+  and a value that is neither keeps the default (10, 32 and 128). This covers
+  every dashboard saved with 1.0.x, the example dashboard in `provisioning/`
+  included.
+
+### Changed
+
+- The filter editor takes its syntax colours from the Grafana theme tokens
+  instead of hard-coded hex values, so it follows Grafana in light and in dark
+  mode.
+
 ## 2.0.0
 
 ### Breaking changes

@@ -71,4 +71,38 @@ test.describe('akvorado backend plugin', () => {
     expect(fields[0].type).toBe('time');
     expect(fields.length).toBeGreaterThan(1);
   });
+
+  /*
+  A dashboard saved with a numeric limit (what provisioning/dashboards/example.json
+  holds) must query just like one saved with a string.
+  */
+  test('QueryData accepts a numeric limit and numeric truncate values', async ({ createDataSource, request }) => {
+    const ds = await createDataSource({ type: PLUGIN_TYPE, url: AKVORADO_URL });
+
+    const resp = await request.post('/api/ds/query', {
+      data: {
+        from: 'now-1h',
+        to: 'now',
+        queries: [
+          {
+            refId: 'A',
+            datasource: { type: PLUGIN_TYPE, uid: ds.uid },
+            type: 'timeseries',
+            expression: 'InIfBoundary = external',
+            dimensions: ['SrcAS'],
+            limit: 5,
+            truncatev4: 32,
+            truncatev6: 128,
+            topType: 'avg',
+            unit: 'l3bps',
+          },
+        ],
+      },
+    });
+    await expect(resp).toBeOK();
+    const body = await resp.json();
+    expect(body.results.A.error).toBeUndefined();
+    expect(body.results.A.status).toBe(200);
+    expect(body.results.A.frames.length).toBeGreaterThan(0);
+  });
 });
