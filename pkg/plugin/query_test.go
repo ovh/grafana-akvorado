@@ -3,12 +3,14 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 /*
@@ -166,6 +168,111 @@ func TestHandleQuerySendsANumericLimit(t *testing.T) {
 	}
 	if len(resp.Frames) != 1 || len(resp.Frames[0].Fields) != 2 {
 		t.Fatalf("frames = %v", resp.Frames)
+	}
+}
+
+/*
+A value the query cannot read keeps the default, and the panel says so. A
+silent substitution is what hides a broken dashboard.
+*/
+func TestAnUnreadableValueWarnsInThePanel(t *testing.T) {
+	cases := []struct {
+		name    string
+		raw     string
+		limit   int
+		notices []string
+	}{
+		{
+			name:    "text instead of a number",
+			raw:     `{"type":"timeseries","limit":"abc"}`,
+			limit:   10,
+			notices: []string{`limit "abc" is not a number: the query used 10.`},
+		},
+		{
+			name:    "an unresolved template variable",
+			raw:     `{"type":"timeseries","limit":"$limit"}`,
+			limit:   10,
+			notices: []string{`limit "$limit" is not a number: the query used 10.`},
+		},
+		{
+			name:  "every field readable",
+			raw:   `{"type":"timeseries","limit":10,"truncatev4":"24","truncatev6":64}`,
+			limit: 10,
+		},
+		{
+			name:  "an empty field is not set, not broken",
+			raw:   `{"type":"timeseries","limit":"","truncatev4":null}`,
+			limit: 10,
+		},
+		{
+			name:  "an absent field is not set either",
+			raw:   `{"type":"timeseries"}`,
+			limit: 10,
+		},
+		{
+			name:  "one notice per broken field",
+			raw:   `{"type":"timeseries","limit":"abc","truncatev4":"x","truncatev6":"y"}`,
+			limit: 10,
+			notices: []string{
+				`limit "abc" is not a number: the query used 10.`,
+				`truncatev4 "x" is not a number: the query used 32.`,
+				`truncatev6 "y" is not a number: the query used 128.`,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var qm queryModel
+			if err := json.Unmarshal([]byte(tc.raw), &qm); err != nil {
+				t.Fatalf("unmarshal query: %v", err)
+			}
+			if got := qm.toAkvoradoQuery(backend.TimeRange{}).Limit; got != tc.limit {
+				t.Errorf("limit = %d, want %d", got, tc.limit)
+			}
+			got := qm.warnings()
+			if len(got) != len(tc.notices) {
+				t.Fatalf("warnings = %q, want %q", got, tc.notices)
+			}
+			for i, want := range tc.notices {
+				if got[i] != want {
+					t.Errorf("warning %d = %q, want %q", i, got[i], want)
+				}
+			}
+		})
+	}
+}
+
+func TestFramesCarryTheWarnings(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.Copy(io.Discard, r.Body)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"t":["2026-09-01T10:00:00Z"],"rows":[["12345"]],"points":[[1.5]]}`))
+	}))
+	defer srv.Close()
+
+	d := &Datasource{client: srv.Client(), baseURL: srv.URL}
+	resp := d.handleQuery(context.Background(), backend.DataQuery{
+		RefID:     "A",
+		JSON:      []byte(`{"type":"timeseries","dimensions":["SrcAS"],"limit":"abc"}`),
+		TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(3600, 0)},
+	})
+
+	if resp.Error != nil {
+		t.Fatalf("query failed: %v", resp.Error)
+	}
+	if len(resp.Frames) != 1 || resp.Frames[0].Meta == nil {
+		t.Fatalf("frames = %v", resp.Frames)
+	}
+	notices := resp.Frames[0].Meta.Notices
+	if len(notices) != 1 {
+		t.Fatalf("notices = %v", notices)
+	}
+	if notices[0].Severity != data.NoticeSeverityWarning {
+		t.Errorf("severity = %v, want warning", notices[0].Severity)
+	}
+	if notices[0].Text != `limit "abc" is not a number: the query used 10.` {
+		t.Errorf("text = %q", notices[0].Text)
 	}
 }
 

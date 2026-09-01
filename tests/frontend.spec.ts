@@ -61,4 +61,46 @@ test.describe('akvorado frontend', () => {
 
     expect(errors, `React errors while mounting the query editor:\n${errors.join('\n')}`).toEqual([]);
   });
+
+  /*
+  Clearing the limit used to snap the box back to 10, because the input
+  rendered `limit || DEFAULT_LIMIT`. An empty box now stays empty and warns.
+  */
+  test('clearing the limit keeps the box empty and warns', async ({ panelEditPage, createDataSource, page }) => {
+    const ds = await createDataSource({ type: PLUGIN_TYPE, url: AKVORADO_URL });
+    await panelEditPage.datasource.set(ds.name);
+
+    const limit = page.locator('#limit');
+    await expect(limit).toHaveValue('10');
+
+    await limit.fill('');
+    await expect(limit).toHaveValue('');
+    await expect(page.getByText('Limit is required.')).toBeVisible();
+
+    await limit.fill('60');
+    await expect(page.getByText(/Limit must be between 1 and \d+\./)).toBeVisible();
+
+    await limit.fill('5');
+    await expect(limit).toHaveValue('5');
+    await expect(page.getByText('Limit is required.')).toBeHidden();
+  });
+
+  /*
+  The editor carries a Run query button. Two things cannot be asserted here.
+  The run itself: the panelEditPage fixture issues no query of its own, so a
+  request counter never moves; it is checked against a live dashboard instead.
+  And the button's place in the row: Grafana only emits the query-row test id
+  from 13.1, so scoping the lookup to it fails on every older version in the
+  matrix.
+  */
+  test('the editor carries a Run query button', async ({ panelEditPage, createDataSource, page }) => {
+    const ds = await createDataSource({ type: PLUGIN_TYPE, url: AKVORADO_URL });
+    await panelEditPage.datasource.set(ds.name);
+
+    const run = page.getByTestId('akvorado-run-query');
+
+    await expect(run).toBeVisible();
+    await expect(run).toBeEnabled();
+    await expect(run).toHaveText('Run query');
+  });
 });

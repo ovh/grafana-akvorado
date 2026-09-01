@@ -1,8 +1,18 @@
-import React, { ChangeEvent, useEffect, useState } from 'react';
-import { InlineField, Input, Stack, Select, AsyncMultiSelect, useTheme2, CollapsableSection } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue, AppEvents } from '@grafana/data';
+import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { css } from '@emotion/css';
+import { Input, Select, AsyncMultiSelect, useTheme2, useStyles2 } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorRow, EditorRows, FlexItem, RunQueryButton } from '@grafana/plugin-ui';
+import { QueryEditorProps, SelectableValue, AppEvents, CoreApp } from '@grafana/data';
 import { DataSource, queryTypes, queryUnits } from '../datasource';
-import { DEFAULT_LIMIT, DEFAULT_QUERY, MyDataSourceOptions, MyQuery } from '../types';
+import { DEFAULT_QUERY, MyDataSourceOptions, MyQuery } from '../types';
+import {
+  DEFAULT_MAX_LIMIT,
+  MAX_TRUNCATE_V4,
+  MAX_TRUNCATE_V6,
+  SANKEY_DIMENSIONS_ERROR,
+  firstError,
+  validateQuery,
+} from '../queryValidation';
 
 import { getAppEvents } from '@grafana/runtime';
 import CodeMirror, { EditorView, placeholder } from '@uiw/react-codemirror';
@@ -16,12 +26,30 @@ import { tags as t } from '@lezer/highlight';
 const appEvents = getAppEvents();
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
-export function QueryEditor({ query, onChange, datasource }: Props) {
-  const { limit, type, unit, dimensions, expression, truncatev4, truncatev6, topType } = query;
+export function QueryEditor({ query, onChange, onRunQuery, datasource, app }: Props) {
+  const { type, unit, dimensions, expression, topType } = query;
   const [uiDimensions, setUIDimensions] = useState<Array<SelectableValue<string>>>(
     dimensions?.map((v) => ({ label: v, value: v })) ?? [{ label: 'SrcAS', value: 'SrcAS' }]
   );
   const [containsAddr, setContainsAddr] = useState(false);
+  const [maxLimit, setMaxLimit] = useState(DEFAULT_MAX_LIMIT);
+
+  /* Akvorado refuses a limit above its own dimensionsLimit, so the check uses
+     the value the console reports and falls back to the shipped default. */
+  useEffect(() => {
+    let live = true;
+    datasource
+      .getConfiguration()
+      .then((config) => {
+        if (live && config?.dimensionsLimit) {
+          setMaxLimit(config.dimensionsLimit);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [datasource]);
 
   useEffect(() => {
     const addrCheck = uiDimensions.some(dim => dim.value !== undefined && dim.value.includes('Addr'));
@@ -35,12 +63,50 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
     const value = item.value!!;
     setUITopType(value);
     onChange({ ...query, topType: value });
+    runQuery();
   };
 
 
 
 
+  /*
+  A query can reach the editor without these values, and the query then runs on
+  the documented defaults. `??` fills the box for that case only: an empty
+  string is a deliberate clear, so it stays empty and warns.
+  */
+  const effectiveQuery: MyQuery = useMemo(
+    () => ({
+      ...query,
+      limit: query.limit ?? DEFAULT_QUERY.limit!!,
+      truncatev4: query.truncatev4 ?? DEFAULT_QUERY.truncatev4!!,
+      truncatev6: query.truncatev6 ?? DEFAULT_QUERY.truncatev6!!,
+    }),
+    [query]
+  );
+  const validationErrors = validateQuery(effectiveQuery, { maxLimit, withTruncate: containsAddr });
+  const queryError = firstError(validationErrors);
+
+  /* filterQuery skips a query that carries an error, so a value the query
+     cannot use stops the request and shows the warning, instead of running
+     with a default nobody asked for. */
+  useEffect(() => {
+    if ((query.error ?? undefined) !== queryError) {
+      onChange({ ...query, error: queryError });
+    }
+  }, [query, queryError, onChange]);
+
+  /* Nothing re-ran the query before: an edit only reached the panel through
+     the Refresh button. Every commit of a value now runs it, and the Run query
+     button runs it on demand. A query that carries a warning does not run,
+     because filterQuery drops it anyway. */
+  const runQuery = () => {
+    if (!queryError) {
+      onRunQuery();
+    }
+  };
+
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
 
   /* Theme tokens, so the filter editor follows Grafana in both light and dark
      mode instead of carrying its own hex values. */
@@ -80,32 +146,30 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
   const onDimensionsChange = (selected: Array<SelectableValue<string>>) => {
     const newdimensions = selected.map((v) => v.value).filter((v): v is string => v !== undefined);
     setUIDimensions(selected);
-    onChange({ ...query, dimensions: newdimensions });
-    let myerror: string | undefined;
-    if (query.type === 'sankey' && newdimensions && newdimensions.length < 2) {
-      let myerror = "At least two dimensions are required for 'sankey' type queries.";
+    if (query.type === 'sankey' && newdimensions.length < 2) {
       appEvents.publish({
         type: AppEvents.alertError.name,
-        payload: [myerror],
+        payload: [SANKEY_DIMENSIONS_ERROR],
       });
     }
-    onChange({ ...query, dimensions: newdimensions, error: myerror });
+    onChange({ ...query, dimensions: newdimensions });
+    runQuery();
   };
 
   const onTypeChange = (item: SelectableValue<string>) => {
-    let myerror: string | undefined;
-    if (item.value === 'sankey' && dimensions && dimensions.length < 2) {
-      myerror = "At least two dimensions are required for 'sankey' type queries.";
+    if (item.value === 'sankey' && (dimensions?.length ?? 0) < 2) {
       appEvents.publish({
         type: AppEvents.alertError.name,
-        payload: [myerror],
+        payload: [SANKEY_DIMENSIONS_ERROR],
       });
     }
-    onChange({ ...query, type: item.value || '', error: myerror });
+    onChange({ ...query, type: item.value || '' });
+    runQuery();
   };
 
   const onUnitChange = (item: SelectableValue<string>) => {
     onChange({ ...query, unit: item.value!! });
+    runQuery();
   };
 
   const onLimitChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -138,117 +202,166 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
   }
 
   return (
-
-    <Stack gap={1} direction={'column'}>
-      <Stack gap={1}>
-        <InlineField label="Type of query" labelWidth={16} tooltip="Select the type of query">
-          <Select value={type} options={queryTypeOptions()} onChange={onTypeChange} width={20} />
-        </InlineField>
-        <InlineField label="Unit" labelWidth={16} tooltip="Select the unit">
-          <Select value={unit} options={queryUnitsOptions()} onChange={onUnitChange} width={20} />
-        </InlineField>
-        <InlineField label="Dimensions" labelWidth={16} tooltip="Select dimensions">
-          <AsyncMultiSelect
-            defaultOptions
-            placeholder="Select dimensions"
-            loadOptions={loadAsyncDimensions}
-            value={uiDimensions}
-            onChange={onDimensionsChange}
-            width={32}
-          />
-        </InlineField>
-        <InlineField label="Limit" labelWidth={16} tooltip="Number of results returned by the query (max 50)">
-          <Input
-            id="limit"
-            type="text"
-            value={limit || DEFAULT_LIMIT}
-            onChange={onLimitChange}
-            placeholder="Enter limit"
-            width={10}
-          />
-        </InlineField>
-      </Stack>
-      <Stack>
-        <InlineField label="Filters" tooltip="Filters for the query" grow={true} labelWidth={16}>
-          <CodeMirror
-            value={uiExpression}
-            theme={theme.isDark ? 'dark' : 'light'}
-            extensions={[
-              filterLanguage(),
-              filterCompletion(datasource),
-              autocompletion({ icons: false }),
-              createLinter(datasource),
-              history(),
-              ...filterTheme,
-              placeholder('Filter expression'),
-              EditorView.lineWrapping,
-              EditorView.updateListener.of((viewUpdate) => {
-                if (viewUpdate.docChanged) {
-                  setUIExpression(viewUpdate.state.doc.toString());
-                  onChange({ ...query, expression: viewUpdate.state.doc.toString() });
-                }
-                if (viewUpdate.focusChanged) {
-                  if (!viewUpdate.view.hasFocus) {
-                    // Trim spaces
-                    const index = viewUpdate.state.doc.toString().search(/\s+$/);
-                    if (index !== -1) {
-                      viewUpdate.view.dispatch({
-                        changes: {
-                          from: index,
-                          to: viewUpdate.state.doc.length,
-                        },
-                      });
-                    }
-                  }
-                }
-              }),
-            ]}
-          />
-        </InlineField>
-      </Stack>
-      <Stack>
-        <CollapsableSection label="Options" isOpen={false}>
-          <InlineField label="Legend" labelWidth={16} tooltip="Series name override or template. Ex {{hostname}} will be replaced with label values for hostname.">
-            <Select value={type} options={queryTypeOptions()} onChange={onTypeChange} width={20} />
-          </InlineField>
-        </CollapsableSection>
-      </Stack>
-      {containsAddr && (
-        <Stack>
-          <InlineField label="IPv4 /x" labelWidth={16} tooltip="IPv4 /x">
-            <Input
-              id="uiTruncatedV4"
-              type="number"
-              value={truncatev4 || '32' }
-              onChange={onTruncatedV4Change}
-              min={0}
-              max={32}
+    <EditorRows>
+      <EditorRow>
+        <EditorFieldGroup>
+          <EditorField label="Type of query" tooltip="Select the type of query">
+            <Select value={type} options={queryTypeOptions()} onChange={onTypeChange} width={18} />
+          </EditorField>
+          <EditorField label="Unit" tooltip="Select the unit">
+            <Select value={unit} options={queryUnitsOptions()} onChange={onUnitChange} width={14} />
+          </EditorField>
+          <EditorField
+            label="Dimensions"
+            tooltip="Select the dimensions the results are grouped by"
+            invalid={!!validationErrors.dimensions}
+            error={validationErrors.dimensions}
+          >
+            <AsyncMultiSelect
+              defaultOptions
+              placeholder="Select dimensions"
+              loadOptions={loadAsyncDimensions}
+              value={uiDimensions}
+              onChange={onDimensionsChange}
+              width={24}
             />
-          </InlineField>
-          <InlineField label="IPv6 /x" labelWidth={16} tooltip="IPv6 /x">
+          </EditorField>
+          <EditorField
+            label="Limit"
+            tooltip={`Number of results returned by the query (max ${maxLimit})`}
+            invalid={!!validationErrors.limit}
+            error={validationErrors.limit}
+          >
             <Input
-              id="uiTruncatedV6"
-              type="number"
-              value={truncatev6 || '128' }
-              onChange={onTruncatedV6Change}
-              min={0}
-              max={128}
+              id="limit"
+              type="text"
+              value={effectiveQuery.limit}
+              onChange={onLimitChange}
+              onBlur={runQuery}
+              placeholder="Enter limit"
+              width={8}
             />
-          </InlineField>
-          <InlineField label="Top by" labelWidth={16} tooltip="Way to fetch the limit">
+          </EditorField>
+          <EditorField label="Top by" tooltip="How the limit picks the top results">
             <Select
               id="uiLimitType"
               value={uiTopType}
               onChange={handleLimitTypeChange}
               options={queryTopOptions()}
-              width={20}
+              width={12}
+            />
+          </EditorField>
+        </EditorFieldGroup>
+        <FlexItem grow={1} />
+        {/* Explore carries its own run button. */}
+        {app !== CoreApp.Explore && (
+          <div className={styles.runQuery}>
+            <RunQueryButton
+              onClick={runQuery}
+              queryInvalid={!!queryError}
+              invalidQueryTooltip={queryError}
+              dataTestId="akvorado-run-query"
+            />
+          </div>
+        )}
+      </EditorRow>
+
+      <EditorRow>
+        <div className={styles.filter}>
+          <EditorField label="Filter" tooltip="Filter expression for the query">
+            <CodeMirror
+              value={uiExpression}
+              theme={theme.isDark ? 'dark' : 'light'}
+              extensions={[
+                filterLanguage(),
+                filterCompletion(datasource),
+                autocompletion({ icons: false }),
+                createLinter(datasource),
+                history(),
+                ...filterTheme,
+                placeholder('Filter expression'),
+                EditorView.lineWrapping,
+                EditorView.updateListener.of((viewUpdate) => {
+                  if (viewUpdate.docChanged) {
+                    setUIExpression(viewUpdate.state.doc.toString());
+                    onChange({ ...query, expression: viewUpdate.state.doc.toString() });
+                  }
+                  if (viewUpdate.focusChanged) {
+                    if (!viewUpdate.view.hasFocus) {
+                      runQuery();
+                      // Trim spaces
+                      const index = viewUpdate.state.doc.toString().search(/\s+$/);
+                      if (index !== -1) {
+                        viewUpdate.view.dispatch({
+                          changes: {
+                            from: index,
+                            to: viewUpdate.state.doc.length,
+                          },
+                        });
+                      }
+                    }
+                  }
+                }),
+              ]}
+            />
+          </EditorField>
+        </div>
+      </EditorRow>
+
+      {containsAddr && (
+        <EditorRow>
+          <EditorFieldGroup>
+            <EditorField
+              label="IPv4 prefix length"
+              tooltip="Group IPv4 addresses by this prefix length"
+              invalid={!!validationErrors.truncatev4}
+              error={validationErrors.truncatev4}
             >
-            </Select>
-          </InlineField>
-        </Stack>
+              <Input
+                id="uiTruncatedV4"
+                type="number"
+                value={effectiveQuery.truncatev4}
+                onChange={onTruncatedV4Change}
+                onBlur={runQuery}
+                min={0}
+                max={MAX_TRUNCATE_V4}
+                width={8}
+              />
+            </EditorField>
+            <EditorField
+              label="IPv6 prefix length"
+              tooltip="Group IPv6 addresses by this prefix length"
+              invalid={!!validationErrors.truncatev6}
+              error={validationErrors.truncatev6}
+            >
+              <Input
+                id="uiTruncatedV6"
+                type="number"
+                value={effectiveQuery.truncatev6}
+                onChange={onTruncatedV6Change}
+                onBlur={runQuery}
+                min={0}
+                max={MAX_TRUNCATE_V6}
+                width={8}
+              />
+            </EditorField>
+          </EditorFieldGroup>
+        </EditorRow>
       )}
-    </Stack >
-
-
+    </EditorRows>
   );
 }
+
+/* The filter expression owns its whole row, the way the query field does in
+   the Prometheus editor. */
+const getStyles = () => ({
+  filter: css({
+    flexGrow: 1,
+    minWidth: 0,
+  }),
+  /* The fields carry a label above them, so the button lines up with the boxes
+     and not with the labels. */
+  runQuery: css({
+    alignSelf: 'flex-end',
+  }),
+});
