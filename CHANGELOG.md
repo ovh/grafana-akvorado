@@ -18,6 +18,19 @@
 - A dashboard that holds an unreadable value still runs with the default, and
   the panel now carries a warning that names the field and the value it
   ignored.
+- The query editor follows the layout of the Grafana Prometheus editor. Fields
+  sit in grouped rows, each label above its box, and the filter expression owns
+  its own row. A warning now appears under its own field, inside the row,
+  instead of a floating message that ran off the edge of a narrow panel pane.
+- "Top by" is always available. It applies to every query, but it only appeared
+  when a dimension carried an address.
+- The IPv4 and IPv6 boxes are labelled "IPv4 prefix length" and "IPv6 prefix
+  length", not "IPv4 /x" and "IPv6 /x".
+
+### Removed
+
+- The empty "Options" section. Its only control was labelled "Legend" and set
+  the type of the query instead, which was a copy of the field above it.
 
 ## 2.0.1
 

@@ -1,5 +1,7 @@
 import React, { ChangeEvent, useEffect, useMemo, useState } from 'react';
-import { InlineField, Input, Stack, Select, AsyncMultiSelect, useTheme2, CollapsableSection } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { Input, Select, AsyncMultiSelect, useTheme2, useStyles2 } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { QueryEditorProps, SelectableValue, AppEvents } from '@grafana/data';
 import { DataSource, queryTypes, queryUnits } from '../datasource';
 import { DEFAULT_QUERY, MyDataSourceOptions, MyQuery } from '../types';
@@ -93,6 +95,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
   }, [query, queryError, onChange]);
 
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
 
   /* Theme tokens, so the filter editor follows Grafana in both light and dark
      mode instead of carrying its own hex values. */
@@ -185,141 +188,145 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
   }
 
   return (
-
-    <Stack gap={1} direction={'column'}>
-      <Stack gap={1}>
-        <InlineField label="Type of query" labelWidth={16} tooltip="Select the type of query">
-          <Select value={type} options={queryTypeOptions()} onChange={onTypeChange} width={20} />
-        </InlineField>
-        <InlineField label="Unit" labelWidth={16} tooltip="Select the unit">
-          <Select value={unit} options={queryUnitsOptions()} onChange={onUnitChange} width={20} />
-        </InlineField>
-        <InlineField
-          label="Dimensions"
-          labelWidth={16}
-          tooltip="Select dimensions"
-          invalid={!!validationErrors.dimensions}
-          error={validationErrors.dimensions}
-        >
-          <AsyncMultiSelect
-            defaultOptions
-            placeholder="Select dimensions"
-            loadOptions={loadAsyncDimensions}
-            value={uiDimensions}
-            onChange={onDimensionsChange}
-            width={32}
-          />
-        </InlineField>
-        <InlineField
-          label="Limit"
-          labelWidth={16}
-          tooltip={`Number of results returned by the query (max ${maxLimit})`}
-          invalid={!!validationErrors.limit}
-          error={validationErrors.limit}
-        >
-          <Input
-            id="limit"
-            type="text"
-            value={effectiveQuery.limit}
-            onChange={onLimitChange}
-            placeholder="Enter limit"
-            width={10}
-          />
-        </InlineField>
-      </Stack>
-      <Stack>
-        <InlineField label="Filters" tooltip="Filters for the query" grow={true} labelWidth={16}>
-          <CodeMirror
-            value={uiExpression}
-            theme={theme.isDark ? 'dark' : 'light'}
-            extensions={[
-              filterLanguage(),
-              filterCompletion(datasource),
-              autocompletion({ icons: false }),
-              createLinter(datasource),
-              history(),
-              ...filterTheme,
-              placeholder('Filter expression'),
-              EditorView.lineWrapping,
-              EditorView.updateListener.of((viewUpdate) => {
-                if (viewUpdate.docChanged) {
-                  setUIExpression(viewUpdate.state.doc.toString());
-                  onChange({ ...query, expression: viewUpdate.state.doc.toString() });
-                }
-                if (viewUpdate.focusChanged) {
-                  if (!viewUpdate.view.hasFocus) {
-                    // Trim spaces
-                    const index = viewUpdate.state.doc.toString().search(/\s+$/);
-                    if (index !== -1) {
-                      viewUpdate.view.dispatch({
-                        changes: {
-                          from: index,
-                          to: viewUpdate.state.doc.length,
-                        },
-                      });
-                    }
-                  }
-                }
-              }),
-            ]}
-          />
-        </InlineField>
-      </Stack>
-      <Stack>
-        <CollapsableSection label="Options" isOpen={false}>
-          <InlineField label="Legend" labelWidth={16} tooltip="Series name override or template. Ex {{hostname}} will be replaced with label values for hostname.">
+    <EditorRows>
+      <EditorRow>
+        <EditorFieldGroup>
+          <EditorField label="Type of query" tooltip="Select the type of query">
             <Select value={type} options={queryTypeOptions()} onChange={onTypeChange} width={20} />
-          </InlineField>
-        </CollapsableSection>
-      </Stack>
-      {containsAddr && (
-        <Stack>
-          <InlineField
-            label="IPv4 /x"
-            labelWidth={16}
-            tooltip="IPv4 /x"
-            invalid={!!validationErrors.truncatev4}
-            error={validationErrors.truncatev4}
+          </EditorField>
+          <EditorField label="Unit" tooltip="Select the unit">
+            <Select value={unit} options={queryUnitsOptions()} onChange={onUnitChange} width={16} />
+          </EditorField>
+          <EditorField
+            label="Dimensions"
+            tooltip="Select the dimensions the results are grouped by"
+            invalid={!!validationErrors.dimensions}
+            error={validationErrors.dimensions}
+          >
+            <AsyncMultiSelect
+              defaultOptions
+              placeholder="Select dimensions"
+              loadOptions={loadAsyncDimensions}
+              value={uiDimensions}
+              onChange={onDimensionsChange}
+              width={32}
+            />
+          </EditorField>
+          <EditorField
+            label="Limit"
+            tooltip={`Number of results returned by the query (max ${maxLimit})`}
+            invalid={!!validationErrors.limit}
+            error={validationErrors.limit}
           >
             <Input
-              id="uiTruncatedV4"
-              type="number"
-              value={effectiveQuery.truncatev4}
-              onChange={onTruncatedV4Change}
-              min={0}
-              max={MAX_TRUNCATE_V4}
+              id="limit"
+              type="text"
+              value={effectiveQuery.limit}
+              onChange={onLimitChange}
+              placeholder="Enter limit"
+              width={12}
             />
-          </InlineField>
-          <InlineField
-            label="IPv6 /x"
-            labelWidth={16}
-            tooltip="IPv6 /x"
-            invalid={!!validationErrors.truncatev6}
-            error={validationErrors.truncatev6}
-          >
-            <Input
-              id="uiTruncatedV6"
-              type="number"
-              value={effectiveQuery.truncatev6}
-              onChange={onTruncatedV6Change}
-              min={0}
-              max={MAX_TRUNCATE_V6}
-            />
-          </InlineField>
-          <InlineField label="Top by" labelWidth={16} tooltip="Way to fetch the limit">
+          </EditorField>
+          <EditorField label="Top by" tooltip="How the limit picks the top results">
             <Select
               id="uiLimitType"
               value={uiTopType}
               onChange={handleLimitTypeChange}
               options={queryTopOptions()}
-              width={20}
+              width={12}
+            />
+          </EditorField>
+        </EditorFieldGroup>
+      </EditorRow>
+
+      <EditorRow>
+        <div className={styles.filter}>
+          <EditorField label="Filter" tooltip="Filter expression for the query">
+            <CodeMirror
+              value={uiExpression}
+              theme={theme.isDark ? 'dark' : 'light'}
+              extensions={[
+                filterLanguage(),
+                filterCompletion(datasource),
+                autocompletion({ icons: false }),
+                createLinter(datasource),
+                history(),
+                ...filterTheme,
+                placeholder('Filter expression'),
+                EditorView.lineWrapping,
+                EditorView.updateListener.of((viewUpdate) => {
+                  if (viewUpdate.docChanged) {
+                    setUIExpression(viewUpdate.state.doc.toString());
+                    onChange({ ...query, expression: viewUpdate.state.doc.toString() });
+                  }
+                  if (viewUpdate.focusChanged) {
+                    if (!viewUpdate.view.hasFocus) {
+                      // Trim spaces
+                      const index = viewUpdate.state.doc.toString().search(/\s+$/);
+                      if (index !== -1) {
+                        viewUpdate.view.dispatch({
+                          changes: {
+                            from: index,
+                            to: viewUpdate.state.doc.length,
+                          },
+                        });
+                      }
+                    }
+                  }
+                }),
+              ]}
+            />
+          </EditorField>
+        </div>
+      </EditorRow>
+
+      {containsAddr && (
+        <EditorRow>
+          <EditorFieldGroup>
+            <EditorField
+              label="IPv4 prefix length"
+              tooltip="Group IPv4 addresses by this prefix length"
+              invalid={!!validationErrors.truncatev4}
+              error={validationErrors.truncatev4}
             >
-            </Select>
-          </InlineField>
-        </Stack>
+              <Input
+                id="uiTruncatedV4"
+                type="number"
+                value={effectiveQuery.truncatev4}
+                onChange={onTruncatedV4Change}
+                min={0}
+                max={MAX_TRUNCATE_V4}
+                width={12}
+              />
+            </EditorField>
+            <EditorField
+              label="IPv6 prefix length"
+              tooltip="Group IPv6 addresses by this prefix length"
+              invalid={!!validationErrors.truncatev6}
+              error={validationErrors.truncatev6}
+            >
+              <Input
+                id="uiTruncatedV6"
+                type="number"
+                value={effectiveQuery.truncatev6}
+                onChange={onTruncatedV6Change}
+                min={0}
+                max={MAX_TRUNCATE_V6}
+                width={12}
+              />
+            </EditorField>
+          </EditorFieldGroup>
+        </EditorRow>
       )}
-    </Stack >
-
-
+    </EditorRows>
   );
 }
+
+/* The filter expression owns its whole row, the way the query field does in
+   the Prometheus editor. */
+const getStyles = () => ({
+  filter: css({
+    flexGrow: 1,
+    minWidth: 0,
+  }),
+});

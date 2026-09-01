@@ -59,11 +59,11 @@ export function validateQuery(query: MyQuery, opts: { maxLimit: number; withTrun
   /* The two truncate fields only reach the query when a dimension carries an
      address, so they only get checked then. */
   if (opts.withTruncate) {
-    const v4 = numberFieldError('IPv4 /x', query.truncatev4, 0, MAX_TRUNCATE_V4);
+    const v4 = numberFieldError('IPv4 prefix length', query.truncatev4, 0, MAX_TRUNCATE_V4);
     if (v4) {
       errors.truncatev4 = v4;
     }
-    const v6 = numberFieldError('IPv6 /x', query.truncatev6, 0, MAX_TRUNCATE_V6);
+    const v6 = numberFieldError('IPv6 prefix length', query.truncatev6, 0, MAX_TRUNCATE_V6);
     if (v6) {
       errors.truncatev6 = v6;
     }

@@ -33,7 +33,7 @@ describe('numberFieldError', () => {
   it('warns when the value is out of range', () => {
     expect(numberFieldError('Limit', '0', 1, 50)).toBe('Limit must be between 1 and 50.');
     expect(numberFieldError('Limit', '51', 1, 50)).toBe('Limit must be between 1 and 50.');
-    expect(numberFieldError('IPv4 /x', '33', 0, 32)).toBe('IPv4 /x must be between 0 and 32.');
+    expect(numberFieldError('IPv4 prefix length', '33', 0, 32)).toBe('IPv4 prefix length must be between 0 and 32.');
   });
 
   it('leaves a template variable to the query time', () => {
@@ -56,8 +56,8 @@ describe('validateQuery', () => {
     const broken = { ...baseQuery, truncatev4: '99', truncatev6: '999' };
     expect(validateQuery(broken, { maxLimit: DEFAULT_MAX_LIMIT, withTruncate: false })).toEqual({});
     const errors = validateQuery(broken, { maxLimit: DEFAULT_MAX_LIMIT, withTruncate: true });
-    expect(errors.truncatev4).toBe('IPv4 /x must be between 0 and 32.');
-    expect(errors.truncatev6).toBe('IPv6 /x must be between 0 and 128.');
+    expect(errors.truncatev4).toBe('IPv4 prefix length must be between 0 and 32.');
+    expect(errors.truncatev6).toBe('IPv6 prefix length must be between 0 and 128.');
   });
 
   it('keeps the sankey dimensions rule, and reports it first', () => {
