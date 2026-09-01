@@ -192,10 +192,10 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
       <EditorRow>
         <EditorFieldGroup>
           <EditorField label="Type of query" tooltip="Select the type of query">
-            <Select value={type} options={queryTypeOptions()} onChange={onTypeChange} width={20} />
+            <Select value={type} options={queryTypeOptions()} onChange={onTypeChange} width={18} />
           </EditorField>
           <EditorField label="Unit" tooltip="Select the unit">
-            <Select value={unit} options={queryUnitsOptions()} onChange={onUnitChange} width={16} />
+            <Select value={unit} options={queryUnitsOptions()} onChange={onUnitChange} width={14} />
           </EditorField>
           <EditorField
             label="Dimensions"
@@ -209,7 +209,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
               loadOptions={loadAsyncDimensions}
               value={uiDimensions}
               onChange={onDimensionsChange}
-              width={32}
+              width={24}
             />
           </EditorField>
           <EditorField
@@ -224,7 +224,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
               value={effectiveQuery.limit}
               onChange={onLimitChange}
               placeholder="Enter limit"
-              width={12}
+              width={8}
             />
           </EditorField>
           <EditorField label="Top by" tooltip="How the limit picks the top results">
@@ -296,7 +296,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
                 onChange={onTruncatedV4Change}
                 min={0}
                 max={MAX_TRUNCATE_V4}
-                width={12}
+                width={8}
               />
             </EditorField>
             <EditorField
@@ -312,7 +312,7 @@ export function QueryEditor({ query, onChange, datasource }: Props) {
                 onChange={onTruncatedV6Change}
                 min={0}
                 max={MAX_TRUNCATE_V6}
-                width={12}
+                width={8}
               />
             </EditorField>
           </EditorFieldGroup>
